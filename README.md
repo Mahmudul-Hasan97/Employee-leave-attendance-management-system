@@ -88,3 +88,6 @@ MIT License
 ## Resubmission Update
 
 Updated frontend base setup documentation for Issue #21.
+## Backend Resubmission Update
+
+Updated backend base setup documentation for Issue #23.
