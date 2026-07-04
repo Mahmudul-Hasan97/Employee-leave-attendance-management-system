@@ -85,3 +85,6 @@ Mahmudul Hasan
 ## License
 
 MIT License
+## Resubmission Update
+
+Updated frontend base setup documentation for Issue #21.
