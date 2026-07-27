@@ -1,4 +1,6 @@
-fastapi
-uvicorn
-pydantic
-python-dotenv
+fastapi==0.138.1
+uvicorn==0.49.0
+sqlalchemy
+pymysql
+python-dotenv==1.2.2
+pydantic==2.13.4
