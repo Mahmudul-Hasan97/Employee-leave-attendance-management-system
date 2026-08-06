@@ -10,7 +10,6 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
 
-    # ব্যাকএন্ড ফোল্ডারে স্থায়ীভাবে ওয়ার্কিং ডিরেক্টরি সেটআপ
     defaults:
       run:
         working-directory: ./backend
@@ -30,5 +29,7 @@ jobs:
         pip install fastapi uvicorn sqlalchemy passlib[bcrypt] python-jose[cryptography] python-multipart pytest httpx "bcrypt<4.0.0"
 
     - name: Run Pytest
+      env:
+        DATABASE_URL: "sqlite:///./employee_system.db"
       run: |
         python -m pytest

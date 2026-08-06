@@ -5,7 +5,8 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# DATABASE_URL না পাওয়া গেলে ডিফল্ট হিসেবে "sqlite:///./employee_system.db" ব্যবহার করবে
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./employee_system.db")
 
 # For SQLite databases, add check_same_thread
 if DATABASE_URL and DATABASE_URL.startswith("sqlite"):
@@ -21,11 +22,9 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-        
