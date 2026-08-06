@@ -4,3 +4,4 @@ sqlalchemy
 pydantic
 passlib
 python-multipart
+python-dotenv
