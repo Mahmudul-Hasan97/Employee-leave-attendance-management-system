@@ -41,6 +41,7 @@ Employee = EmployeeResponse
 # ==================== ATTENDANCE SCHEMAS ====================
 class AttendanceBase(BaseModel):
     employee_id: Optional[Union[int, str]] = None
+    employee_name: Optional[str] = None
     date: Optional[str] = None
     status: Optional[str] = None
 
@@ -77,7 +78,7 @@ class LeaveRequestResponse(LeaveRequestBase):
 class LeaveStatusUpdate(BaseModel):
     status: str
 
-# Compatibility Aliases for Pytest and Routers
+# Compatibility Aliases
 LeaveRequest = LeaveRequestResponse
 LeaveBase = LeaveRequestBase
 LeaveCreate = LeaveRequestCreate

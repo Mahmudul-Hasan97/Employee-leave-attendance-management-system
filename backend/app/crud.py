@@ -64,16 +64,44 @@ def delete_employee(db: Session, employee_id: int):
 # ==================== ATTENDANCE MANAGEMENT ====================
 
 def get_attendance_list(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Attendance).offset(skip).limit(limit).all()
+    records = db.query(models.Attendance).offset(skip).limit(limit).all()
+    result = []
+    for item in records:
+        # Fetch actual employee name from Employee table using employee_id
+        emp = db.query(models.Employee).filter(models.Employee.id == item.employee_id).first()
+        emp_name = emp.name if emp else f"Employee #{item.employee_id}"
+
+        result.append({
+            "id": item.id,
+            "employee_id": item.employee_id,
+            "employee_name": emp_name,
+            "date": item.date,
+            "status": item.status
+        })
+    return result
 
 def create_attendance(db: Session, attendance: schemas.AttendanceCreate):
     emp_id = attendance.employee_id
+    emp_name = "Employee"
+
     if isinstance(emp_id, str):
         if emp_id.isdigit():
             emp_id = int(emp_id)
+            emp = db.query(models.Employee).filter(models.Employee.id == emp_id).first()
+            if emp:
+                emp_name = emp.name
         else:
             emp = db.query(models.Employee).filter(models.Employee.name.ilike(f"%{emp_id}%")).first()
-            emp_id = emp.id if emp else 1
+            if emp:
+                emp_id = emp.id
+                emp_name = emp.name
+            else:
+                emp_name = str(attendance.employee_id)
+                emp_id = 1
+    elif isinstance(emp_id, int):
+        emp = db.query(models.Employee).filter(models.Employee.id == emp_id).first()
+        if emp:
+            emp_name = emp.name
 
     db_attendance = models.Attendance(
         employee_id=emp_id or 1,
@@ -83,7 +111,14 @@ def create_attendance(db: Session, attendance: schemas.AttendanceCreate):
     db.add(db_attendance)
     db.commit()
     db.refresh(db_attendance)
-    return db_attendance
+
+    return {
+        "id": db_attendance.id,
+        "employee_id": db_attendance.employee_id,
+        "employee_name": emp_name,
+        "date": db_attendance.date,
+        "status": db_attendance.status
+    }
 
 # ==================== LEAVE MANAGEMENT ====================
 

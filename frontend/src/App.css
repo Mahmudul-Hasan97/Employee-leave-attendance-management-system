@@ -1,17 +1,118 @@
-/* Basic global styles */
-* {
-  box-sizing: border-box;
+/* ==================== GLOBAL STYLES & READABILITY ==================== */
+body {
   margin: 0;
   padding: 0;
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-body {
-  background-color: #f8f9fa;
-  color: #333;
-  line-height: 1.6;
+/* Page Titles & Headings */
+h1, h2, h3, h4, h5, h6, .page-title {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  margin-bottom: 20px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
-h1, h2, h3 {
-  color: #2c3e50;
+/* ==================== INPUT FIELDS & FORM ==================== */
+input, select, textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 10px 14px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  outline: none;
+}
+
+input::placeholder {
+  color: #64748b !important;
+}
+
+input:focus, select:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3) !important;
+}
+
+/* ==================== BEAUTIFUL READABLE TABLE ==================== */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 15px;
+  background-color: #1e293b !important; /* Clean Dark Card */
+  color: #ffffff !important;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  border: 1px solid #334155;
+}
+
+/* Table Header */
+th {
+  background-color: #0f172a !important;
+  color: #38bdf8 !important; /* Sky Blue Header Text */
+  font-weight: 600 !important;
+  font-size: 15px;
+  padding: 14px 18px !important;
+  text-align: left;
+  border-bottom: 2px solid #334155 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Table Data Rows (স্পষ্ট সাদা লেখা) */
+td {
+  padding: 14px 18px !important;
+  color: #ffffff !important; /* 100% Crisp Pure White Text */
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-bottom: 1px solid #334155 !important;
+  vertical-align: middle;
+}
+
+/* Row Hover Effect */
+tr:hover td {
+  background-color: #334155 !important; /* Interactive Row Highlight */
+  color: #38bdf8 !important;
+}
+
+/* Last Row Border Fix */
+tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* ==================== BUTTONS ==================== */
+button {
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary, button[type="submit"] {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 10px 18px !important;
+  cursor: pointer;
+}
+
+.btn-primary:hover, button[type="submit"]:hover {
+  background-color: #0369a1 !important;
+}
+
+/* Action Buttons inside Table */
+button:contains("Edit"), .btn-edit {
+  background-color: #0ea5e9 !important;
+  color: white !important;
+  padding: 6px 14px !important;
+  margin-right: 8px;
+}
+
+button:contains("Delete"), .btn-delete {
+  background-color: #ef4444 !important;
+  color: white !important;
+  padding: 6px 14px !important;
 }
