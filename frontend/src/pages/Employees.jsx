@@ -11,7 +11,7 @@ function Employees() {
   const [editingId, setEditingId] = useState(null); 
 
   const fetchEmp = () => {
-    axios.get("http://127.0.0.1:8000/employees/")
+    axios.get("http://https://ems-backend-maog.onrender.com/employees/")
       .then(res => setEmployees(res.data))
       .catch(err => console.error(err));
   };
@@ -23,11 +23,11 @@ function Employees() {
     try {
       if (editingId) {
         // যদি এডিট মোডে থাকে, তাহলে Update API কল হবে
-        await axios.put(`http://127.0.0.1:8000/employees/${editingId}`, { name, email, department: dept });
+        await axios.put(`http://https://ems-backend-maog.onrender.com/employees/${editingId}`, { name, email, department: dept });
         setEditingId(null);
       } else {
         // যদি নতুন যোগ করে, তাহলে Post API কল হবে
-        await axios.post("http://127.0.0.1:8000/employees/", { name, email, department: dept });
+        await axios.post("http://https://ems-backend-maog.onrender.com/employees/", { name, email, department: dept });
       }
       fetchEmp(); 
       setName(''); setEmail(''); setDept(''); 
@@ -45,7 +45,7 @@ function Employees() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/employees/${id}`);
+      await axios.delete(`http://https://ems-backend-maog.onrender.com/employees/${id}`);
       fetchEmp(); 
     } catch (error) {
       console.error("Error deleting employee", error);

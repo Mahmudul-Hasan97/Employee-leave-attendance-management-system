@@ -6,7 +6,7 @@ function Dashboard() {
 
   useEffect(() => {
     // Fetching data from the backend API
-    axios.get("http://127.0.0.1:8000/dashboard/stats")
+    axios.get("http://https://ems-backend-maog.onrender.com/dashboard/stats")
       .then(res => setStats(res.data))
       .catch(err => console.error("Error fetching stats:", err));
   }, []);

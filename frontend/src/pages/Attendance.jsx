@@ -8,7 +8,7 @@ function Attendance() {
   const [status, setStatus] = useState('Present');
 
   const fetchAttendance = () => {
-    axios.get("http://127.0.0.1:8000/attendance/")
+    axios.get("http://https://ems-backend-maog.onrender.com/attendance/")
       .then(res => setAttendanceList(res.data))
       .catch(err => console.error(err));
   };
@@ -18,7 +18,7 @@ function Attendance() {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://127.0.0.1:8000/attendance/", { employee_name: employeeName, date: date, status: status });
+      await axios.post("http://https://ems-backend-maog.onrender.com/attendance/", { employee_name: employeeName, date: date, status: status });
       fetchAttendance();
       setEmployeeName('');
       setDate('');

@@ -7,7 +7,7 @@ function Leave() {
   const [leaveType, setLeaveType] = useState('Sick Leave');
 
   const fetchLeaves = () => {
-    axios.get("http://127.0.0.1:8000/leave/")
+    axios.get("http://https://ems-backend-maog.onrender.com/leave/")
       .then(res => setLeaves(res.data))
       .catch(err => console.error(err));
   };
@@ -17,7 +17,7 @@ function Leave() {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://127.0.0.1:8000/leave/", { employee_name: employeeName, leave_type: leaveType });
+      await axios.post("http://https://ems-backend-maog.onrender.com/leave/", { employee_name: employeeName, leave_type: leaveType });
       fetchLeaves();
       setEmployeeName('');
     } catch (error) {
@@ -28,7 +28,7 @@ function Leave() {
   // নতুন যোগ করা হলো: স্ট্যাটাস আপডেট করার ফাংশন
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/leave/${id}?status=${newStatus}`);
+      await axios.put(`http://https://ems-backend-maog.onrender.com/leave/${id}?status=${newStatus}`);
       fetchLeaves();
     } catch (error) {
       console.error("Error updating leave status", error);
@@ -37,7 +37,7 @@ function Leave() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/leave/${id}`);
+      await axios.delete(`http://https://ems-backend-maog.onrender.com/leave/${id}`);
       fetchLeaves();
     } catch (error) {
       console.error("Error deleting leave", error);

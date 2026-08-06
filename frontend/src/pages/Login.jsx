@@ -12,7 +12,7 @@ function Login({ setToken }) {
     
     try {
       // API Call to Backend
-      const res = await axios.post("http://127.0.0.1:8000/auth/login", { username, password });
+      const res = await axios.post("http://https://ems-backend-maog.onrender.com/auth/login", { username, password });
       
       // Extract Data
       const { access_token, role } = res.data;
