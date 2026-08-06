@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 
 # ==================== USER SCHEMAS ====================
 class UserBase(BaseModel):
@@ -17,9 +17,7 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-# Alias for Routers
 User = UserResponse
-
 
 # ==================== EMPLOYEE SCHEMAS ====================
 class EmployeeBase(BaseModel):
@@ -38,13 +36,11 @@ class EmployeeResponse(EmployeeBase):
     class Config:
         from_attributes = True
 
-# Alias for Routers
 Employee = EmployeeResponse
-
 
 # ==================== ATTENDANCE SCHEMAS ====================
 class AttendanceBase(BaseModel):
-    employee_id: Optional[int] = None
+    employee_id: Optional[Union[int, str]] = None
     date: Optional[str] = None
     status: Optional[str] = None
 
@@ -57,27 +53,33 @@ class AttendanceResponse(AttendanceBase):
     class Config:
         from_attributes = True
 
-# Alias for Routers
 Attendance = AttendanceResponse
-
 
 # ==================== LEAVE REQUEST SCHEMAS ====================
 class LeaveRequestBase(BaseModel):
-    employee_id: Optional[int] = None
+    employee_id: Optional[Union[int, str]] = None
+    employee_name: Optional[str] = "Employee"
     leave_type: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     reason: Optional[str] = None
+    status: Optional[str] = "Pending"
 
 class LeaveRequestCreate(LeaveRequestBase):
     pass
 
 class LeaveRequestResponse(LeaveRequestBase):
     id: int
-    status: Optional[str] = "Pending"
 
     class Config:
         from_attributes = True
 
-# Alias for Routers
+class LeaveStatusUpdate(BaseModel):
+    status: str
+
+# Compatibility Aliases for Pytest and Routers
 LeaveRequest = LeaveRequestResponse
+LeaveBase = LeaveRequestBase
+LeaveCreate = LeaveRequestCreate
+LeaveResponse = LeaveRequestResponse
+Leave = LeaveRequestResponse

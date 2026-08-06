@@ -13,7 +13,7 @@ def create_user(db: Session, user: schemas.UserCreate):
         username=user.username,
         email=user.email,
         password=hashed_pwd,
-        role=user.role if hasattr(user, 'role') else "employee"
+        role=getattr(user, 'role', 'employee') or "employee"
     )
     db.add(db_user)
     db.commit()
@@ -41,13 +41,25 @@ def create_employee(db: Session, employee: schemas.EmployeeCreate):
     db.refresh(db_employee)
     return db_employee
 
+def update_employee(db: Session, employee_id: int, employee: schemas.EmployeeCreate):
+    db_employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
+    if db_employee:
+        db_employee.name = employee.name
+        db_employee.email = employee.email
+        db_employee.department = employee.department
+        db_employee.designation = employee.designation
+        db_employee.phone = employee.phone
+        db.commit()
+        db.refresh(db_employee)
+    return db_employee
+
 def delete_employee(db: Session, employee_id: int):
     employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
     if employee:
         db.delete(employee)
         db.commit()
-        return True
-    return False
+        return employee
+    return None
 
 # ==================== ATTENDANCE MANAGEMENT ====================
 
@@ -55,8 +67,16 @@ def get_attendance_list(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Attendance).offset(skip).limit(limit).all()
 
 def create_attendance(db: Session, attendance: schemas.AttendanceCreate):
+    emp_id = attendance.employee_id
+    if isinstance(emp_id, str):
+        if emp_id.isdigit():
+            emp_id = int(emp_id)
+        else:
+            emp = db.query(models.Employee).filter(models.Employee.name.ilike(f"%{emp_id}%")).first()
+            emp_id = emp.id if emp else 1
+
     db_attendance = models.Attendance(
-        employee_id=attendance.employee_id,
+        employee_id=emp_id or 1,
         date=attendance.date,
         status=attendance.status
     )
@@ -71,13 +91,25 @@ def get_leave_requests(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.LeaveRequest).offset(skip).limit(limit).all()
 
 def create_leave_request(db: Session, leave: schemas.LeaveRequestCreate):
+    emp_id = leave.employee_id
+    emp_name = getattr(leave, 'employee_name', None) or "Employee"
+
+    if isinstance(emp_id, str):
+        if emp_id.isdigit():
+            emp_id = int(emp_id)
+        else:
+            emp_name = emp_id
+            emp = db.query(models.Employee).filter(models.Employee.name.ilike(f"%{emp_id}%")).first()
+            emp_id = emp.id if emp else 1
+
     db_leave = models.LeaveRequest(
-        employee_id=leave.employee_id,
+        employee_id=emp_id or 1,
+        employee_name=emp_name,
         leave_type=leave.leave_type,
         start_date=leave.start_date,
         end_date=leave.end_date,
         reason=leave.reason,
-        status="Pending"
+        status=getattr(leave, 'status', 'Pending') or "Pending"
     )
     db.add(db_leave)
     db.commit()
@@ -90,6 +122,14 @@ def update_leave_status(db: Session, leave_id: int, status: str):
         leave.status = status
         db.commit()
         db.refresh(leave)
+        return leave
+    return None
+
+def delete_leave_request(db: Session, leave_id: int):
+    leave = db.query(models.LeaveRequest).filter(models.LeaveRequest.id == leave_id).first()
+    if leave:
+        db.delete(leave)
+        db.commit()
         return leave
     return None
 
