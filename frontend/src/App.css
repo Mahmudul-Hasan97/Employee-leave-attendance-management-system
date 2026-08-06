@@ -104,15 +104,19 @@ button {
 }
 
 /* Action Buttons inside Table */
-button:contains("Edit"), .btn-edit {
+.btn-edit {
   background-color: #0ea5e9 !important;
   color: white !important;
   padding: 6px 14px !important;
   margin-right: 8px;
+  border: none !important;
+  cursor: pointer;
 }
 
-button:contains("Delete"), .btn-delete {
+.btn-delete {
   background-color: #ef4444 !important;
   color: white !important;
   padding: 6px 14px !important;
+  border: none !important;
+  cursor: pointer;
 }

@@ -19,7 +19,7 @@ class TokenResponse(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    # ১. ডাটাবেজ চেকের আগেই সরাসরি এডমিন চেক (যাতে ডাটাবেজের যেকোনো কনফ্লিক্ট বাইপাস হয়)
+    # ১. ডাটাবেজ চেকের আগেই সরাসরি এডমিন বাইপাস (যাতে ডাটাবেজ কনফ্লিক্ট না করে)
     if data.username == "admin" and data.password == "admin123":
         access_token = create_access_token(data={"sub": "admin", "role": "admin"})
         return {
@@ -29,7 +29,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "role": "admin"
         }
 
-    # ২. ডাটাবেসে ইউজারকে খোঁজা (সাধারণ ইউজারদের জন্য)
+    # ২. ডাটাবেসে ইউজারকে খোঁজা (অন্যান্য সাধারণ ইউজারদের জন্য)
     user = get_user_by_username(db, data.username)
     if not user:
         raise HTTPException(
@@ -37,12 +37,11 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             detail="Invalid username or password"
         )
     
-    # ৩. পাসওয়ার্ড ভেরিফাই করা (Hashed or Plain Check)
+    # ৩. পাসওয়ার্ড ভেরিফাই করা
     is_valid_password = False
     try:
         is_valid_password = verify_password(data.password, user.password)
     except Exception:
-        # যদি ডাটাবেসে প্লেইন টেক্সট সেভ থাকে
         if user.password == data.password:
             is_valid_password = True
 
