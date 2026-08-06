@@ -7,9 +7,17 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Employee Leave & Attendance Management System")
 
+# Allowed Origins (CORS Security Fix)
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://employee-leave-attendance-managemen.vercel.app",  # আপনার Vercel Frontend URL
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Vercel-এর যেকোনো সাবডোমেইন অ্যালাউ করবে
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
