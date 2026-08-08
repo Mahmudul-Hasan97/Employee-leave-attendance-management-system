@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+// 🎯 ডাইনামিক ব্যাকএন্ড লিংক: Vercel/Render-এ থাকলে এনভায়রনমেন্ট লিংক নিবে, লোকালি থাকলে 127.0.0.1 নিবে
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 function Login({ setToken }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -11,13 +14,11 @@ function Login({ setToken }) {
     setError('');
     
     try {
-      // API Call to Backend
-      const res = await axios.post("http://https://ems-backend-maog.onrender.com/auth/login", { username, password });
+      // ডাইনামিক লিংক ব্যবহার করা হয়েছে
+      const res = await axios.post(`${API_BASE_URL}/auth/login`, { username, password });
       
-      // Extract Data
       const { access_token, role } = res.data;
       
-      // LocalStorage-এ সিকিউর টোকেন ও রোল সেভ করা
       localStorage.setItem("token", access_token);
       localStorage.setItem("role", role);
       localStorage.setItem("username", username);
@@ -39,7 +40,6 @@ function Login({ setToken }) {
         boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '360px', textAlign: 'center',
         border: '1px solid #334155'
       }}>
-        
         <h1 style={{ margin: '0 0 5px 0', color: '#38bdf8', fontSize: '28px' }}>EMS Portal</h1>
         <p style={{ margin: '0 0 25px 0', color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>
           Employee Management System
@@ -82,7 +82,6 @@ function Login({ setToken }) {
             Login
           </button>
         </form>
-
       </div>
     </div>
   );

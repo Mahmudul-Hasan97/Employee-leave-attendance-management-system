@@ -19,8 +19,8 @@ class TokenResponse(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    # ১. ডাটাবেজ চেকের আগেই সরাসরি এডমিন বাইপাস (যাতে ডাটাবেজ কনফ্লিক্ট না করে)
-    if data.username == "admin" and data.password == "admin123":
+    # 🎯 গ্যারান্টিড শর্টকাট: admin / admin দিলে ডাটাবেজ ছাড়াই সরাসরি ঢুকিয়ে দেবে
+    if data.username == "admin" and data.password == "admin":
         access_token = create_access_token(data={"sub": "admin", "role": "admin"})
         return {
             "access_token": access_token, 
@@ -29,7 +29,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "role": "admin"
         }
 
-    # ২. ডাটাবেসে ইউজারকে খোঁজা (অন্যান্য সাধারণ ইউজারদের জন্য)
+    # অন্যান্য ইউজারের জন্য সাধারণ ডাটাবেজ চেক
     user = get_user_by_username(db, data.username)
     if not user:
         raise HTTPException(
@@ -37,7 +37,6 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             detail="Invalid username or password"
         )
     
-    # ৩. পাসওয়ার্ড ভেরিফাই করা
     is_valid_password = False
     try:
         is_valid_password = verify_password(data.password, user.password)
@@ -51,7 +50,6 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             detail="Invalid username or password"
         )
     
-    # ৪. সিকিউর JWT টোকেন জেনারেট করা
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
     
     return {

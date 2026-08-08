@@ -6,7 +6,7 @@ import os
 load_dotenv()
 
 # DATABASE_URL না পাওয়া গেলে ডিফল্ট হিসেবে "sqlite:///./employee_system.db" ব্যবহার করবে
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./employee_system.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./employee_system_v2.db")
 
 # For SQLite databases, add check_same_thread
 if DATABASE_URL and DATABASE_URL.startswith("sqlite"):
