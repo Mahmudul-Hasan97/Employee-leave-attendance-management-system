@@ -2,92 +2,91 @@
 
 ## Overview
 
-Employee Leave & Attendance Management System is a web-based application developed to automate attendance tracking and leave management. The system reduces manual paperwork and provides an efficient workflow for employees, HR managers, and administrators.
+Employee Leave & Attendance Management System is a modern web-based application developed to automate attendance tracking and leave management. The system reduces manual paperwork and provides an efficient workflow for employees, HR managers, and administrators.
 
 ---
 
 ## Features
 
-- User Authentication
-- Employee Management
-- Attendance Tracking
-- Leave Management
-- Leave Approval
-- Report Generation
-- Dashboard
-- Role-Based Access Control
+- **User Authentication:** Secure login for employees and admins.
+- **Employee Management:** Add, update, and manage employee profiles.
+- **Attendance Tracking:** Keep daily records of employee attendance.
+- **Leave Management:** Apply for leaves and track leave balances.
+- **Leave Approval:** Admin workflow to approve or reject leave requests.
+- **Dashboard:** Interactive UI to view attendance and leave summaries.
+- **Role-Based Access Control:** Distinct views and permissions for Admins and Employees.
 
 ---
 
-## Technologies
+## Technologies Used
 
 ### Frontend
-- HTML
-- CSS
-- Bootstrap
-- JavaScript
+- React.js
+- JavaScript (ES6+)
+- HTML5, CSS3 & Bootstrap
+- Axios (for API requests)
 
 ### Backend
-- PHP
+- Python
+- FastAPI
+- Uvicorn (ASGI server)
 
 ### Database
-- MySQL
+- SQLite
 
 ### Version Control
-- Git
-- GitHub
+- Git & GitHub
 
 ---
 
 ## Folder Structure
 
-```
-employee-leave-attendance-management-system
+```text
+employee-leave-attendance-management-system/
 │
-├── docs
-├── database
-├── api
-├── diagrams
-├── screenshots
+├── backend/                # FastAPI Backend System
+│   ├── app/                # Main application package
+│   ├── seed.py             # Database seed script
+│   └── requirements.txt    # Python dependencies
 │
-├── README.md
-├── LICENSE
-└── .gitignore
-```
+├── frontend/               # React Frontend Application
+│   ├── src/                # React components and API services
+│   ├── public/             # Static assets
+│   └── package.json        # Node.js dependencies
+│
+├── docs/                   # Documentation files
+├── README.md               # Project documentation
+├── LICENSE                 # License information
+└── .gitignore              # Git ignore rules
 
----
+Modules
+Authentication
 
-## Modules
+Attendance
 
-- Authentication
-- Attendance
-- Leave Management
-- Employee Management
-- Reports
+Leave Management
 
----
+Employee Management
 
-## Future Scope
+Reports
 
-- Mobile App
-- Face Recognition Attendance
-- Payroll System
-- Email Notification
+Future Scope
+Mobile App
 
----
+Face Recognition Attendance
 
-## Author
+Payroll System
 
+Email Notifications
+
+Author
 Mahmudul Hasan
 
----
-
-## License
-
+License
 MIT License
-## Resubmission Update
 
+Resubmission Update
 Updated frontend base setup documentation for Issue #21.
-## Backend Resubmission Update
 
+Backend Resubmission Update
 Updated backend base setup documentation for Issue #23.
