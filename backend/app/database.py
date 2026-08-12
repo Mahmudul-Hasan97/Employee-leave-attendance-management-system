@@ -1,27 +1,20 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from dotenv import load_dotenv
-import os
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-load_dotenv()
+# Updated Database URL to create a fresh Database file
+SQLALCHEMY_DATABASE_URL = "sqlite:///./employee_system_v2.db"
 
-# DATABASE_URL না পাওয়া গেলে ডিফল্ট হিসেবে "sqlite:///./employee_system.db" ব্যবহার করবে
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./employee_system_v2.db")
-
-# For SQLite databases, add check_same_thread
-if DATABASE_URL and DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-else:
-    engine = create_engine(DATABASE_URL)
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args={"check_same_thread": False}
 )
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+# Dependency for API Routers
 def get_db():
     db = SessionLocal()
     try:

@@ -1,86 +1,63 @@
-from pydantic import BaseModel
-from typing import Optional, Union
+from pydantic import BaseModel, EmailStr
+from datetime import date
+from typing import Optional
 
-# ==================== USER SCHEMAS ====================
-class UserBase(BaseModel):
-    username: str
-    email: Optional[str] = None
-    role: Optional[str] = "employee"
-
-class UserCreate(UserBase):
+class LoginRequest(BaseModel):
+    email: EmailStr
     password: str
+    role: str
 
-class UserResponse(UserBase):
-    id: int
-    is_active: Optional[bool] = True
-
-    class Config:
-        from_attributes = True
-
-User = UserResponse
-
-# ==================== EMPLOYEE SCHEMAS ====================
-class EmployeeBase(BaseModel):
+class UserCreate(BaseModel):
     name: str
-    email: Optional[str] = None
-    department: Optional[str] = None
-    designation: Optional[str] = None
-    phone: Optional[str] = None
+    email: EmailStr
+    password: str
+    role: str
 
-class EmployeeCreate(EmployeeBase):
-    pass
-
-class EmployeeResponse(EmployeeBase):
+class UserResponse(BaseModel):
     id: int
+    name: str
+    email: EmailStr
+    role: str
 
     class Config:
         from_attributes = True
 
-Employee = EmployeeResponse
+class AttendanceCreate(BaseModel):
+    user_id: int
+    clock_in: str
 
-# ==================== ATTENDANCE SCHEMAS ====================
-class AttendanceBase(BaseModel):
-    employee_id: Optional[Union[int, str]] = None
-    employee_name: Optional[str] = None
-    date: Optional[str] = None
+class AttendanceUpdate(BaseModel):
     status: Optional[str] = None
+    clock_in: Optional[str] = None
+    clock_out: Optional[str] = None
 
-class AttendanceCreate(AttendanceBase):
-    pass
-
-class AttendanceResponse(AttendanceBase):
+class AttendanceResponse(BaseModel):
     id: int
+    user_id: int
+    date: str
+    clock_in: str
+    clock_out: Optional[str] = None
+    status: str
 
     class Config:
         from_attributes = True
 
-Attendance = AttendanceResponse
-
-# ==================== LEAVE REQUEST SCHEMAS ====================
-class LeaveRequestBase(BaseModel):
-    employee_id: Optional[Union[int, str]] = None
-    employee_name: Optional[str] = "Employee"
-    leave_type: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    reason: Optional[str] = None
-    status: Optional[str] = "Pending"
-
-class LeaveRequestCreate(LeaveRequestBase):
-    pass
-
-class LeaveRequestResponse(LeaveRequestBase):
-    id: int
-
-    class Config:
-        from_attributes = True
+class LeaveRequestCreate(BaseModel):
+    user_id: int
+    start_date: date
+    end_date: date
+    reason: str
 
 class LeaveStatusUpdate(BaseModel):
     status: str
 
-# Compatibility Aliases
-LeaveRequest = LeaveRequestResponse
-LeaveBase = LeaveRequestBase
-LeaveCreate = LeaveRequestCreate
-LeaveResponse = LeaveRequestResponse
-Leave = LeaveRequestResponse
+class LeaveRequestResponse(BaseModel):
+    id: int
+    user_id: int
+    start_date: date
+    end_date: date
+    reason: str
+    status: str
+
+    class Config:
+        from_attributes = True

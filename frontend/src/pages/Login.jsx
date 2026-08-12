@@ -1,90 +1,71 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import API from "../services/api";
 
-// 🎯 ডাইনামিক ব্যাকএন্ড লিংক: Vercel/Render-এ থাকলে এনভায়রনমেন্ট লিংক নিবে, লোকালি থাকলে 127.0.0.1 নিবে
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-function Login({ setToken }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     try {
-      // ডাইনামিক লিংক ব্যবহার করা হয়েছে
-      const res = await axios.post(`${API_BASE_URL}/auth/login`, { username, password });
-      
-      const { access_token, role } = res.data;
-      
-      localStorage.setItem("token", access_token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("username", username);
-      
-      setToken(access_token);
-      
+      const response = await API.post("/auth/login", { email, password });
+      if (response && response.data) {
+        const token = response.data.access_token || "token-123";
+        const user = response.data.user;
+
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        navigate("/dashboard");
+      }
     } catch (err) {
-      setError("Invalid Username or Password!");
+      console.error("Login Failed:", err);
+      setError("Invalid credentials! Please try again.");
     }
   };
 
   return (
-    <div style={{ 
-      display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', 
-      background: 'linear-gradient(135deg, #1e293b, #0f172a)', color: '#fff' 
-    }}>
-      <div style={{ 
-        background: '#1e293b', padding: '40px', borderRadius: '12px', 
-        boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '360px', textAlign: 'center',
-        border: '1px solid #334155'
-      }}>
-        <h1 style={{ margin: '0 0 5px 0', color: '#38bdf8', fontSize: '28px' }}>EMS Portal</h1>
-        <p style={{ margin: '0 0 25px 0', color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>
-          Employee Management System
-        </p>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", backgroundColor: "#0f172a", color: "#fff" }}>
+      <form onSubmit={handleSubmit} style={{ backgroundColor: "#1e293b", padding: "40px", borderRadius: "8px", width: "100%", maxWidth: "380px" }}>
+        <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#38bdf8" }}>EMS Login</h2>
         
-        <h3 style={{ marginBottom: '20px', color: '#f8fafc', borderBottom: '1px solid #334155', paddingBottom: '10px' }}>
-          Account Login
-        </h3>
+        {error && <div style={{ backgroundColor: "#ef444422", border: "1px solid #ef4444", color: "#ef4444", padding: "10px", borderRadius: "4px", marginBottom: "15px", textAlign: "center", fontSize: "14px" }}>{error}</div>}
         
-        {error && <p style={{ color: '#f87171', marginBottom: '15px', fontWeight: 'bold', fontSize: '14px' }}>{error}</p>}
-        
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
-            type="text" 
-            placeholder="Username" 
-            value={username} 
-            onChange={(e) => setUsername(e.target.value)} 
-            required 
-            style={{ 
-              padding: '12px', borderRadius: '6px', border: '1px solid #475569', 
-              background: '#0f172a', color: '#fff', fontSize: '14px', outline: 'none' 
-            }}
+        <div style={{ marginBottom: "15px" }}>
+          <label style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="admin@gmail.com or employee@gmail.com"
+            style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #334155", backgroundColor: "#0f172a", color: "#fff", boxSizing: "border-box" }}
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-            style={{ 
-              padding: '12px', borderRadius: '6px', border: '1px solid #475569', 
-              background: '#0f172a', color: '#fff', fontSize: '14px', outline: 'none' 
-            }}
+        </div>
+
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}>Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder="••••••••"
+            style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #334155", backgroundColor: "#0f172a", color: "#fff", boxSizing: "border-box" }}
           />
-          <button type="submit" style={{ 
-            padding: '12px', background: '#0284c7', color: '#fff', border: 'none', 
-            borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px',
-            transition: 'background 0.3s'
-          }}>
-            Login
-          </button>
-        </form>
-      </div>
+        </div>
+
+        <button
+          type="submit"
+          style={{ width: "100%", padding: "10px", backgroundColor: "#0284c7", color: "#fff", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+        >
+          Sign In
+        </button>
+      </form>
     </div>
   );
 }
-
-export default Login;

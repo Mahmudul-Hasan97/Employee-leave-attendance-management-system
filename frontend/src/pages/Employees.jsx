@@ -1,102 +1,114 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import API from "../services/api";
 
-function Employees() {
+export default function Employees() {
   const [employees, setEmployees] = useState([]);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [dept, setDept] = useState('');
-  
-  // নতুন: এডিট করার জন্য আইডি ট্র্যাক করা
-  const [editingId, setEditingId] = useState(null); 
+  const [formData, setFormData] = useState({ name: "", email: "", role: "employee" });
 
-  const fetchEmp = () => {
-    axios.get("http://https://ems-backend-maog.onrender.com/employees/")
-      .then(res => setEmployees(res.data))
-      .catch(err => console.error(err));
-  };
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
-  useEffect(() => { fetchEmp(); }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const fetchEmployees = async () => {
     try {
-      if (editingId) {
-        // যদি এডিট মোডে থাকে, তাহলে Update API কল হবে
-        await axios.put(`http://https://ems-backend-maog.onrender.com/employees/${editingId}`, { name, email, department: dept });
-        setEditingId(null);
-      } else {
-        // যদি নতুন যোগ করে, তাহলে Post API কল হবে
-        await axios.post("http://https://ems-backend-maog.onrender.com/employees/", { name, email, department: dept });
+      const res = await API.get("/employees");
+      if (Array.isArray(res.data)) {
+        setEmployees(res.data);
       }
-      fetchEmp(); 
-      setName(''); setEmail(''); setDept(''); 
-    } catch (error) {
-      console.error("Error saving employee", error);
+    } catch (err) {
+      console.error("Error fetching employees:", err);
     }
   };
 
-  const handleEdit = (emp) => {
-    setEditingId(emp.id);
-    setName(emp.name);
-    setEmail(emp.email);
-    setDept(emp.department);
+  const handleAddEmployee = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email) return;
+
+    try {
+      const res = await API.post("/employees", formData);
+      if (res.data) {
+        setEmployees([...employees, res.data]);
+        setFormData({ name: "", email: "", role: "employee" });
+      }
+    } catch (err) {
+      console.error("Failed to add employee:", err);
+    }
   };
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://https://ems-backend-maog.onrender.com/employees/${id}`);
-      fetchEmp(); 
-    } catch (error) {
-      console.error("Error deleting employee", error);
+      await API.delete(`/employees/${id}`);
+      setEmployees(employees.filter((emp) => emp.id !== id));
+    } catch (err) {
+      console.error("Failed to delete employee:", err);
     }
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setName(''); setEmail(''); setDept('');
   };
 
   return (
     <div>
-      <h2>Employee Management</h2>
-      
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} required style={{ padding: '8px' }} />
-        <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '8px' }} />
-        <input placeholder="Department" value={dept} onChange={e => setDept(e.target.value)} required style={{ padding: '8px' }} />
-        
-        <button type="submit" style={{ padding: '8px 15px', cursor: 'pointer', background: editingId ? '#2196f3' : '#4caf50', color: '#fff', border: 'none', borderRadius: '4px' }}>
-          {editingId ? 'Update Employee' : 'Add Employee'}
+      <h1 style={{ marginBottom: "20px" }}>Employee Management</h1>
+
+      <form onSubmit={handleAddEmployee} style={{ display: "flex", gap: "10px", marginBottom: "30px" }}>
+        <input
+          type="text"
+          placeholder="Employee Name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff", flex: 1 }}
+        />
+        <input
+          type="email"
+          placeholder="Employee Email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          required
+          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff", flex: 1 }}
+        />
+        <select
+          value={formData.role}
+          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }}
+        >
+          <option value="employee">Employee</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <button type="submit" style={{ padding: "10px 20px", backgroundColor: "#0284c7", color: "#fff", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: "pointer" }}>
+          Add Employee
         </button>
-        
-        {editingId && (
-          <button type="button" onClick={cancelEdit} style={{ padding: '8px 15px', cursor: 'pointer', background: '#9e9e9e', color: '#fff', border: 'none', borderRadius: '4px' }}>
-            Cancel
-          </button>
-        )}
       </form>
 
-      <table border="1" width="100%" cellPadding="10" style={{ borderCollapse: 'collapse', textAlign: 'left' }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#1e293b", borderRadius: "8px", overflow: "hidden" }}>
         <thead>
-          <tr style={{ background: '#f4f4f4' }}>
-            <th>ID</th><th>Name</th><th>Email</th><th>Department</th><th>Action</th>
+          <tr style={{ backgroundColor: "#0284c7", color: "#ffffff", textAlign: "left" }}>
+            <th style={{ padding: "12px" }}>ID</th>
+            <th style={{ padding: "12px" }}>NAME</th>
+            <th style={{ padding: "12px" }}>EMAIL</th>
+            <th style={{ padding: "12px" }}>ROLE</th>
+            <th style={{ padding: "12px" }}>ACTION</th>
           </tr>
         </thead>
         <tbody>
-          {employees.map(emp => (
-            <tr key={emp.id}>
-              <td>{emp.id}</td><td>{emp.name}</td><td>{emp.email}</td><td>{emp.department}</td>
-              <td style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => handleEdit(emp)} style={{ color: 'white', background: '#2196f3', cursor: 'pointer', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Edit</button>
-                <button onClick={() => handleDelete(emp.id)} style={{ color: 'white', background: 'red', cursor: 'pointer', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Delete</button>
-              </td>
-            </tr>
-          ))}
+          {employees.length === 0 ? (
+            <tr><td colSpan="5" style={{ padding: "15px", textAlign: "center", color: "#94a3b8" }}>No employees found.</td></tr>
+          ) : (
+            employees.map((emp) => (
+              <tr key={emp.id} style={{ borderBottom: "1px solid #334155" }}>
+                <td style={{ padding: "12px" }}>{emp.id}</td>
+                <td style={{ padding: "12px", fontWeight: "bold", color: "#38bdf8" }}>{emp.name || "N/A"}</td>
+                <td style={{ padding: "12px" }}>{emp.email}</td>
+                <td style={{ padding: "12px" }}>{emp.role}</td>
+                <td style={{ padding: "12px" }}>
+                  <button onClick={() => handleDelete(emp.id)} style={{ padding: "6px 12px", backgroundColor: "#ef4444", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}>
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
   );
 }
-
-export default Employees;

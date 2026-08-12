@@ -1,5 +1,26 @@
-node_modules/
+# Database Files
+*.db
+*.sqlite3
+*.db-journal
+
+# Environment & Virtual Environments
 venv/
-.venv/
-__pycache__/
+env/
+ENV/
 .env
+.env.local
+
+# Python Cache & Testing
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Node Modules & React Build (For Frontend)
+node_modules/
+build/
+dist/
+.DS_Store
+
+# Logs
+*.log
