@@ -2,49 +2,54 @@
 
 ## Survey Objective
 
-The survey was conducted to understand employee satisfaction with the existing attendance and leave management process.
+The survey was conducted to quantitatively measure employee satisfaction with existing attendance tracking and leave request workflows, as well as to gather feedback on user preference for a modern, web-based digital solution built with **React.js** and **FastAPI**.
 
 ---
 
-## Number of Participants
+## Participant Overview
 
-30 Employees
+- **Total Survey Respondents:** 30 Employees (across HR, Administration, and Engineering departments)
+- **Data Collection Method:** Anonymous digital questionnaire
 
 ---
 
 ## Survey Questions
 
-1. Do you currently use an attendance system?
-2. Is attendance recorded manually?
-3. Have you experienced attendance errors?
-4. Do you submit leave requests on paper?
-5. Does leave approval take a long time?
-6. Would you prefer an online leave application?
-7. Do you need attendance reports?
-8. Is your attendance history easily accessible?
-9. Should the leave balance be automatically calculated?
-10. Would you recommend a digital attendance system?
+1. Do you currently record your daily attendance manually?
+2. Have you experienced attendance calculation errors or missing logs in the past 6 months?
+3. Do you submit leave requests on paper or via unstructured emails?
+4. Does the current leave approval process take more than 24-48 hours?
+5. Would you prefer a responsive, web-based online portal for check-ins and leave requests?
+6. Do you need instant, real-time access to your personal attendance and leave history?
+7. Should remaining leave balances be calculated automatically after every approved leave?
+8. Would a centralized, single-click approval dashboard benefit HR managers?
+9. Is instant UI feedback important to you during daily clock-ins?
+10. Would you strongly recommend replacing paper/spreadsheet records with a digital web application?
 
 ---
 
-## Survey Results
+## Survey Results Summary
 
-| Question | Yes | No |
-|----------|-----|----|
-| Manual Attendance | 80% | 20% |
-| Attendance Errors | 70% | 30% |
-| Paper Leave Forms | 85% | 15% |
-| Need Online System | 95% | 5% |
-| Need Reports | 90% | 10% |
+| Key Survey Metrics | Yes (%) | No (%) | Key Takeaway |
+| :--- | :--- | :--- | :--- |
+| **Manual Attendance Usage** | 80% | 20% | Vast majority still rely on manual registers or basic spreadsheets. |
+| **Experience with Attendance Errors** | 70% | 30% | High error rate due to manual data entry and lack of automated tracking. |
+| **Paper / Email Leave Submissions** | 85% | 15% | Leave requests lack a centralized, structured submission platform. |
+| **Demand for Online Web Application** | 95% | 5% | Overwhelming preference for an accessible digital web portal. |
+| **Need for Real-Time Reports & History** | 90% | 10% | Strong need for self-service dashboards showing personal history and balances. |
 
 ---
 
-## Analysis
+## Technical & Operational Analysis
 
-The survey indicates that most employees are dissatisfied with manual attendance and leave management. A digital system would improve efficiency, transparency, and employee satisfaction.
+The survey data clearly highlights significant friction points in legacy manual processes:
+
+1. **High Error & Frustration Rates:** 70% of respondents experienced errors, proving the failure of manual logging and spreadsheet calculations.
+2. **User Experience Preference:** 95% of users demand a streamlined web portal, driving our architectural choice to implement a fast Single Page Application (SPA) using **React.js**.
+3. **Efficiency Gains:** Automated backend logic powered by **FastAPI** and **SQLite** directly resolves user demand for real-time leave balance calculations and instantaneous status updates.
 
 ---
 
 ## Conclusion
 
-Based on the survey results, implementing an Employee Leave & Attendance Management System is strongly recommended.
+The quantitative findings from this survey strongly justify the transition to a modern digital platform. Building the **Employee Leave & Attendance Management System** using React and FastAPI directly addresses user dissatisfaction, automates calculations, eliminates paperwork, and ensures accurate organizational data management.

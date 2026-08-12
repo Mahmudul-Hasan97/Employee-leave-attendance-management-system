@@ -1,265 +1,116 @@
 # Technical Design Document (TDD)
 
 ## Project Name
-
-**Employee Leave & Attendance Management System**
+Employee Leave & Attendance Management System
 
 ---
 
 # Version Information
 
-| Item          | Details                   |
-| ------------- | ------------------------- |
-| Document Name | Technical Design Document |
-| Version       | 1.0                       |
-| Prepared By   | Mahmudul Hasan            |
-| Date          | June 2026                 |
+| Item | Details |
+| :--- | :--- |
+| **Document Name** | Technical Design Document (TDD) |
+| **Version** | 1.0 |
+| **Prepared By** | Mahmudul Hasan |
+| **Date** | June 2026 |
 
 ---
 
 # 1. Introduction
 
 ## Purpose
-
-The Technical Design Document (TDD) describes the technical architecture, software components, database interactions, APIs, and implementation details of the Employee Leave & Attendance Management System.
-
-It acts as a blueprint for developers during implementation.
+The Technical Design Document (TDD) provides a comprehensive technical blueprint for the **Employee Leave & Attendance Management System**. It specifies the low-level component designs, database schema implementations, Python FastAPI REST endpoints, Pydantic data schemas, SQLAlchemy ORM mappings, and React.js state management structures required for system implementation.
 
 ---
 
 # 2. System Overview
 
-The application is a web-based system developed using a layered architecture.
+The system is a modern, decoupled web application built on a client-server architecture.
 
-The system enables employees to:
-
-* Mark Attendance
-* Apply for Leave
-* View Attendance
-* View Leave Status
-
-HR Managers can
-
-* Approve Leave
-* Reject Leave
-* Generate Reports
-
-Administrators can
-
-* Manage Employees
-* Manage Departments
-* Manage Users
-* Configure the System
+### User Functions
+- **Employees:** Mark daily attendance timestamps, apply for leave, view personal leave balances, and track application approval status.
+- **HR Managers:** Review and approve/reject leave requests, monitor workforce attendance in real time, and generate aggregated summary reports.
+- **Administrators:** Provision user accounts, assign Role-Based Access Control (RBAC) roles, manage department entities, and oversee system configurations.
 
 ---
 
 # 3. Technology Stack
 
-| Layer           | Technology                         |
-| --------------- | ---------------------------------- |
-| Frontend        | HTML5, CSS3, Bootstrap, JavaScript |
-| Backend         | PHP                                |
-| Database        | MySQL                              |
-| Web Server      | Apache (XAMPP)                     |
-| Version Control | Git & GitHub                       |
+| Layer | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend Framework** | **React.js (v18+)** | Component-based UI library with React Router DOM |
+| **Frontend Runtime / Tooling** | **Node.js & Vite / npm** | Development server and module bundler |
+| **Backend Framework** | **Python (FastAPI)** | Async Python framework with high-performance execution |
+| **ASGI Web Server** | **Uvicorn** | Lightning-fast async server implementation for Python |
+| **Database Engine** | **SQLite3** | Embedded, serverless, ACID-compliant relational database |
+| **ORM Library** | **SQLAlchemy** | Object-Relational Mapper for Python |
+| **Data Validation** | **Pydantic (v2)** | Strict request and response payload schema validation |
+| **Security & Auth** | **Bcrypt & Passlib** | Secure password hashing and verification |
+| **Version Control** | **Git & GitHub** | Source code management and repository hosting |
 
 ---
 
 # 4. System Architecture
 
-The application follows a Three-Tier Architecture.
+The application implements a decoupled **3-Tier Architecture**:
 
 ```text
-Presentation Layer
-        │
-        ▼
-Business Logic Layer
-        │
-        ▼
-Database Layer
-```
-
----
-
-# 5. Module Design
-
-## Authentication Module
-
-Functions
-
-* Login
-* Logout
-* Session Validation
-* Password Verification
-
----
-
-## Employee Module
-
-Functions
-
-* View Dashboard
-* Mark Attendance
-* Apply Leave
-* Update Profile
-
----
-
-## HR Module
-
-Functions
-
-* View Leave Requests
-* Approve Leave
-* Reject Leave
-* Attendance Reports
-
----
-
-## Administrator Module
-
-Functions
-
-* User Management
-* Department Management
-* Employee Management
-* Report Management
-
----
-
-# 6. Database Design
-
-Main Tables
-
-* users
-* employees
-* attendance
-* leave_requests
-* departments
-
-Relationships
-
-* Department → Employees
-* Employee → Attendance
-* Employee → Leave Requests
-* User → Employee
-
----
-
-# 7. API Design
-
-Authentication API
-
-* POST /login
-* POST /logout
-
-Employee API
-
-* GET /employees
-* POST /employees
-* PUT /employees/{id}
-* DELETE /employees/{id}
-
-Attendance API
-
-* POST /attendance
-* GET /attendance
-
-Leave API
-
-* POST /leave
-* GET /leave
-* PUT /leave/{id}
-
-Reports API
-
-* GET /reports/attendance
-* GET /reports/leave
-
----
-
-# 8. Security Design
-
-The application provides:
-
-* Password Encryption
-* Role-Based Access Control
-* Session Timeout
-* Authentication
-* Authorization
-* Input Validation
-
----
-
-# 9. Error Handling
-
-Possible Errors
-
-* Invalid Login
-* Database Connection Error
-* Invalid Employee ID
-* Attendance Already Marked
-* Leave Request Not Found
-
-Each error returns a meaningful message to the user.
-
----
-
-# 10. Performance Optimization
-
-The system improves performance using:
-
-* Indexed Database Tables
-* Optimized SQL Queries
-* Efficient Session Management
-* Lightweight Frontend
-
----
-
-# 11. Deployment
-
-Development Environment
-
-* Windows 10/11
-* XAMPP
-* PHP
-* MySQL
-
-Production Environment
-
-* Linux Server
-* Apache
-* PHP
-* MySQL
-
----
-
-# 12. Future Improvements
-
-The architecture supports future extensions:
-
-* Mobile Application
-* Biometric Attendance
-* Face Recognition
-* Email Notifications
-* SMS Notifications
-* Payroll Integration
-* Cloud Deployment
-
----
-
-# 13. Advantages
-
-* Modular Design
-* Easy Maintenance
-* Better Performance
-* Secure Architecture
-* Scalable System
-* Easy Testing
-* Easy Deployment
-
----
-
-# Conclusion
-
-The Technical Design Document provides a complete technical blueprint for implementing the Employee Leave & Attendance Management System. It defines the architecture, modules, technologies, APIs, security mechanisms, and deployment strategy, ensuring the system is maintainable, scalable, and secure.
+┌─────────────────────────────────────────────────────────┐
+│                    Presentation Tier                    │
+│            React.js Single Page Application             │
+│        (Custom Hooks, React Context, Axios/Fetch)       │
+└────────────────────────────┬────────────────────────────┘
+                             │
+                             │ Asynchronous HTTP REST API Requests
+                             │ (JSON Payloads)
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Application Tier                     │
+│               Python FastAPI Web Service                │
+│     (Routing, Pydantic Schemas, Security, Business Logic)│
+└────────────────────────────┬────────────────────────────┘
+                             │
+                             │ SQLAlchemy ORM Operations
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                      Data Tier                          │
+│               SQLite Relational Engine                  │
+│       (`users`, `departments`, `attendance`, `leaves`)  │
+└─────────────────────────────────────────────────────────┘
+5. Component & Module Design5.1 Authentication & Security ModuleBackend Components: auth_router.py, security.py (Bcrypt password hashing, token validation).Frontend Components: Login.jsx, AuthContext.jsx (Global state management for authenticated user sessions).Responsibilities: Validating credentials against SQLite records, hashing new passwords, and enforcing Role-Based Access Control (RBAC).5.2 Employee Self-Service ModuleBackend Components: attendance_router.py, leave_router.py.Frontend Components: EmployeeDashboard.jsx, ClockInWidget.jsx, LeaveForm.jsx.Responsibilities: Managing daily check-in/out button triggers, computing daily status, and submitting leave requests.5.3 HR & Administrative Management ModuleBackend Components: admin_router.py, hr_router.py.Frontend Components: HRDashboard.jsx, LeaveApprovalTable.jsx, UserManagement.jsx.Responsibilities: Handling single-click leave request approvals/rejections, updating remaining leave balances automatically, and managing user CRUD operations.5.4 Analytics & Reporting ModuleBackend Components: reports_router.py.Frontend Components: ReportsDashboard.jsx, AttendanceChart.jsx.Responsibilities: Aggregating monthly attendance percentages, summarizing department leave metrics, and returning structured JSON data for rendering charts.6. Database Schema & SQLAlchemy ORM DesignThe SQLite database schema is mapped using Python SQLAlchemy models:Python# SQLAlchemy Schema Overview (Conceptual)
+
+class Department(Base):
+    __tablename__ = 'departments'
+    department_id = Column(Integer, primary_key=True, index=True)
+    department_name = Column(String, unique=True, nullable=False)
+
+class User(Base):
+    __tablename__ = 'users'
+    user_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, default='employee')
+    department_id = Column(Integer, ForeignKey('departments.department_id'))
+    leave_balance = Column(Integer, default=20)
+
+class Attendance(Base):
+    __tablename__ = 'attendance'
+    attendance_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    date = Column(String, nullable=False)
+    check_in = Column(String, nullable=False)
+    check_out = Column(String, nullable=True)
+    status = Column(String, default='Present')
+
+class Leave(Base):
+    __tablename__ = 'leaves'
+    leave_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    leave_type = Column(String, nullable=False)
+    start_date = Column(String, nullable=False)
+    end_date = Column(String, nullable=False)
+    reason = Column(Text, nullable=False)
+    status = Column(String, default='pending')
+7. RESTful API ArchitectureAll communication between React.js and FastAPI uses standard HTTP methods and JSON formatted payloads:Authentication EndpointsPOST /api/login — Authenticates user credentials and returns user identity metadata.POST /api/logout — Terminates client-side session state.User Management EndpointsGET /api/users — Fetches list of all registered employees (Admin/HR only).POST /api/users — Registers a new user account with hashed password (Admin only).PUT /api/users/{id} — Updates employee information or role (Admin only).DELETE /api/users/{id} — Deactivates or removes a user profile (Admin only).Attendance EndpointsPOST /api/attendance/clock-in — Creates a new clock-in entry with current date and time.POST /api/attendance/clock-out — Updates existing daily log with check-out time.GET /api/attendance/user/{id} — Retrieves historical attendance logs for a specific employee.Leave Management EndpointsPOST /api/leaves — Submits a new leave request.GET /api/leaves/pending — Fetches all pending leave applications for HR review.PUT /api/leaves/{id}/status — Updates request state (approved / rejected) and updates user leave balance.Reports EndpointsGET /api/reports/summary — Compiles general system statistics for HR dashboard widgets.8. Security DesignPassword Cryptography: Password plaintexts are never stored; they are hashed using standard Bcrypt algorithms before SQLite persistence.Role-Based Access Control (RBAC): FastAPI dependencies verify user authorization levels (admin, hr, employee) prior to executing endpoint logic.Cross-Origin Protection: FastAPI CORS middleware restricts API consumption exclusively to trusted frontend client origins (http://localhost:3000 / http://localhost:5173).SQL Injection Prevention: SQLAlchemy ORM executes parameterized queries natively, neutralizing SQL injection vectors.9. Error Handling ArchitectureStandardized HTTP status codes and structured JSON response bodies are used across all API responses:HTTP StatusTrigger ConditionJSON Response Payload Structure400 Bad RequestDuplicate clock-in on same date / insufficient leave balance{"detail": "Clock-in already recorded for today."}401 UnauthorizedInvalid email or incorrect password{"detail": "Invalid credentials provided."}403 ForbiddenInsufficient user role permissions{"detail": "Access restricted to HR/Admin."}404 Not FoundResource ID missing in SQLite{"detail": "Employee record not found."}10. Performance Optimization StrategyDatabase Indexing: Indexed primary keys and unique fields (email, user_id) in SQLite speed up lookup operations.Asynchronous Execution: FastAPI's async def routing prevents thread blocking during database IO operations.Minimal React Renders: Optimized state updates in React ensure smooth UI interactions during user navigation.11. Deployment StrategyDevelopment EnvironmentFrontend: React.js hosted on Vite Development Server (http://localhost:5173).Backend: Python FastAPI executing on Uvicorn ASGI Server (http://127.0.0.1:8000).Database: Localized file-based SQLite database (app.db).Production EnvironmentFrontend Build: Compiled static HTML/JS assets served via Nginx or Vercel.Backend Service: FastAPI deployed with Uvicorn worker processes on a Linux VPS / Gunicorn master process.Database: SQLite file persistence with automated filesystem backup routines.ConclusionThis Technical Design Document establishes a comprehensive implementation specification for the Employee Leave & Attendance Management System. By integrating a React.js SPA with a FastAPI backend and SQLite database, the architecture guarantees clean code separation, robust security, fast API response times, and high maintainability.

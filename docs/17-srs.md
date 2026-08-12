@@ -1,308 +1,209 @@
 # Software Requirements Specification (SRS)
 
 ## Project Name
-
-**Employee Leave & Attendance Management System**
+Employee Leave & Attendance Management System
 
 ---
 
 # Version Information
 
-| Item          | Details                             |
-| ------------- | ----------------------------------- |
-| Version       | 1.0                                 |
-| Document Type | Software Requirements Specification |
-| Prepared By   | Mahmudul Hasan                      |
-| Date          | June 2026                           |
+| Item | Details |
+| :--- | :--- |
+| **Version** | 1.0 |
+| **Document Type** | Software Requirements Specification (SRS) |
+| **Prepared By** | Mahmudul Hasan |
+| **Date** | June 2026 |
 
 ---
 
 # 1. Introduction
 
 ## 1.1 Purpose
-
-The purpose of this Software Requirements Specification (SRS) is to define all functional and non-functional requirements for the Employee Leave & Attendance Management System. This document serves as a reference for developers, testers, instructors, and future maintainers.
-
----
-
-## 1.2 Scope
-
-The system is a web-based application designed to automate employee attendance tracking and leave management. It minimizes paperwork, improves approval workflows, and generates useful reports for HR and administrators.
-
-Main modules include:
-
-* User Authentication
-* Employee Management
-* Attendance Management
-* Leave Management
-* Report Generation
-* Profile Management
+The purpose of this Software Requirements Specification (SRS) document is to define the functional, non-functional, database, and system interface specifications for the **Employee Leave & Attendance Management System**. This document serves as the primary technical reference for developers, system architects, and project reviewers.
 
 ---
 
-## 1.3 Intended Users
+## 1.2 System Scope
+The system is a decoupled web application designed to automate organizational attendance recording and leave request workflows. Built with a **React.js** Single Page Application (SPA) frontend and a high-performance **Python (FastAPI)** backend REST API, it replaces legacy paper logs with an asynchronous digital platform backed by an optimized **SQLite** database.
 
-* Administrator
-* HR Manager
-* Employee
+### Core Modules
+- **User Authentication & Authorization (RBAC)**
+- **Employee Self-Service Portal & Clock-In Module**
+- **HR & Admin Leave Approval Workflow**
+- **Employee Directory Management (CRUD)**
+- **Reporting, Analytics & Visual Dashboards**
+- **User Profile Management**
 
 ---
 
-## 1.4 Definitions
+## 1.3 Intended Audience
+- **System Administrator:** Oversees account management, system configuration, and database integrity.
+- **HR Manager / Admin:** Reviews leave requests, monitors daily workforce attendance, and generates summary reports.
+- **General Employee:** Records daily check-ins, submits leave applications, and tracks approval status.
 
-| Term       | Meaning                           |
-| ---------- | --------------------------------- |
-| HR         | Human Resource                    |
-| Attendance | Daily employee check-in/check-out |
-| Leave      | Employee leave request            |
-| Admin      | System administrator              |
+---
+
+## 1.4 Terminology & Definitions
+
+| Term | Definition |
+| :--- | :--- |
+| **SPA** | Single Page Application (React.js UI that updates dynamically without full page reloads). |
+| **FastAPI** | Modern, high-performance web framework for building Python RESTful APIs. |
+| **SQLite** | Self-contained, serverless, file-based relational database engine. |
+| **RBAC** | Role-Based Access Control (restricting API routes and UI views based on user roles). |
+| **ORM** | Object-Relational Mapping (SQLAlchemy mapping Python classes to SQLite tables). |
 
 ---
 
 # 2. Overall Description
 
-## Product Perspective
-
-The system is an independent web application connected to a relational database.
-
----
-
-## Product Functions
-
-The system allows users to:
-
-* Login securely
-* Mark attendance
-* Apply for leave
-* Approve or reject leave requests
-* Manage employees
-* Generate attendance reports
-* Generate leave reports
-* Update personal profiles
+## 2.1 Product Perspective
+The application operates as an independent, client-server web architecture:
+- **Client Tier:** React.js frontend providing responsive user interfaces.
+- **Application Tier:** Python FastAPI backend executing business logic, request validation, and password cryptography.
+- **Data Tier:** SQLite relational database engine ensuring persistent data storage.
 
 ---
 
-## User Characteristics
+## 2.2 System Functions Overview
+- **Authentication:** Secure user login with hashed password verification and session token delivery.
+- **Attendance Tracking:** Digital daily check-in and check-out with instant timestamp logs.
+- **Leave Operations:** Online leave application submission, balance tracking, and single-click HR approval/rejection.
+- **Employee Management:** Complete CRUD operations for administrative management of employee profiles.
+- **Analytics & Reporting:** Aggregated attendance and leave statistics compiled dynamically.
 
-### Administrator
+---
 
-* Technical knowledge
-* Manages the entire system
+## 2.3 User Role Characteristics
 
-### HR Manager
+### System Administrator
+- Possesses full system access permissions.
+- Manages user accounts, configures CORS/security policies, and seeds SQLite database tables.
 
-* Reviews leave requests
-* Generates reports
-* Manages employees
+### HR Manager / Admin
+- Reviews and approves/rejects pending leave requests.
+- Monitors live attendance logs across all departments and generates analytics summaries.
 
-### Employee
-
-* Marks attendance
-* Applies for leave
-* Views attendance history
+### General Employee
+- Accesses a personalized employee dashboard.
+- Executes daily attendance clock-ins and tracks remaining leave allowances.
 
 ---
 
 # 3. Functional Requirements
 
-### Authentication
+### 3.1 Authentication & Security
+- **FR-AUTH-1:** The system shall authenticate users via email and hashed password using bcrypt validation.
+- **FR-AUTH-2:** The system shall enforce Role-Based Access Control (RBAC) on both frontend React Router routes and backend FastAPI API endpoints.
+- **FR-AUTH-3:** The system shall clear session authentication states upon user logout.
 
-* Secure Login
-* Secure Logout
-* Password Validation
+### 3.2 Employee Module
+- **FR-EMP-1:** Employees shall mark daily check-in and check-out timestamps with a single button click on the React interface.
+- **FR-EMP-2:** Employees shall submit digital leave requests specifying leave type (*Casual, Medical, Annual*), start date, end date, and reason.
+- **FR-EMP-3:** Employees shall view real-time approval statuses (*Pending, Approved, Rejected*) and track remaining leave balances.
 
----
-
-### Employee Module
-
-* View Dashboard
-* Mark Attendance
-* Apply Leave
-* Check Leave Status
-* Update Profile
-
----
-
-### HR Module
-
-* View Leave Requests
-* Approve Leave
-* Reject Leave
-* Generate Reports
-
----
-
-### Administrator Module
-
-* Add Employee
-* Edit Employee
-* Delete Employee
-* Manage Departments
-* View Reports
-* Manage Users
+### 3.3 HR & Administrative Module
+- **FR-HR-1:** HR Managers shall view pending leave applications and approve or reject them with a single click.
+- **FR-HR-2:** Upon leave approval, the FastAPI backend shall automatically deduct the taken days from the employee's remaining leave balance in SQLite.
+- **FR-HR-3:** Administrators shall create, update, search, or deactivate employee profiles.
+- **FR-HR-4:** HR Managers shall generate and view summary reports on attendance and leave distribution.
 
 ---
 
 # 4. Non-Functional Requirements
 
-## Performance
+## 4.1 Performance & Responsiveness
+- REST API response times for standard requests shall be under 200–500ms.
+- Clock-in status badge updates on the React frontend shall occur instantaneously without full page reloads.
 
-* Response time less than 3 seconds
-* Fast report generation
+## 4.2 Security
+- Passwords shall be encrypted using secure hashing techniques prior to database insertion.
+- Backend APIs shall enforce strict Cross-Origin Resource Sharing (CORS) rules allowing only trusted client origins.
 
----
+## 4.3 Reliability & Database Integrity
+- SQLite database transactions shall guarantee ACID compliance during attendance recording and leave updates.
 
-## Security
-
-* Password encryption
-* Role-based access
-* Session timeout
-* Authentication required
-
----
-
-## Reliability
-
-* Daily backup
-* Error recovery
-* Activity logging
-
----
-
-## Availability
-
-* 24/7 availability except maintenance
-
----
-
-## Maintainability
-
-* Modular source code
-* Easy updates
-* Well-documented system
+## 4.4 Usability & Accessibility
+- The interface shall be intuitive, clean, and responsive across desktop and tablet screen sizes using HTML5, CSS3, and Bootstrap.
 
 ---
 
 # 5. External Interface Requirements
 
-## User Interface
-
-The application provides:
-
-* Login Page
-* Dashboard
-* Attendance Page
-* Leave Management Page
-* Employee Management Page
-* Reports Page
+## 5.1 User Interfaces
+The system provides five main interface views:
+1. **Login View:** Secure portal for user authentication.
+2. **Employee Dashboard:** Clock-in widget, leave submission form, and log history.
+3. **HR Approval Panel:** Interactive table for reviewing pending leave requests.
+4. **Employee Management Panel:** CRUD interface for updating employee profiles.
+5. **Analytics & Reports Panel:** Visual summaries and filterable data tables.
 
 ---
 
-## Hardware Interface
-
-* Desktop Computer
-* Laptop
-
----
-
-## Software Interface
-
-* Web Browser
-* MySQL Database
-* Web Server
+## 5.2 Software Interfaces
+- **Frontend Framework:** React.js (Node.js runtime environment).
+- **Backend Service:** Python 3.8+ with FastAPI framework and Uvicorn ASGI Server.
+- **Database Engine:** SQLite3 relational engine accessed via SQLAlchemy ORM.
+- **Browser Compatibility:** Google Chrome, Mozilla Firefox, Microsoft Edge, Safari.
 
 ---
 
-# 6. Database Requirements
+# 6. Database Schema Requirements
 
-Main tables:
+The relational SQLite database structure comprises three primary tables:
 
-* Users
-* Employees
-* Attendance
-* Leave Requests
-* Departments
+1. **`users` Table:**
+   - `id` (INTEGER, Primary Key, Auto-increment)
+   - `name` (TEXT, Not Null)
+   - `email` (TEXT, Unique, Not Null)
+   - `password` (TEXT, Hashed, Not Null)
+   - `role` (TEXT, Default 'employee')
 
-Primary keys shall uniquely identify each record.
+2. **`attendance` Table:**
+   - `id` (INTEGER, Primary Key, Auto-increment)
+   - `user_id` (INTEGER, Foreign Key referencing `users.id`)
+   - `date` (TEXT, Timestamp)
+   - `status` (TEXT, Present/Late/Absent)
 
-Foreign keys shall maintain relationships.
+3. **`leaves` Table:**
+   - `id` (INTEGER, Primary Key, Auto-increment)
+   - `user_id` (INTEGER, Foreign Key referencing `users.id`)
+   - `leave_type` (TEXT, Not Null)
+   - `start_date` (TEXT, Not Null)
+   - `end_date` (TEXT, Not Null)
+   - `status` (TEXT, Default 'pending')
 
 ---
 
 # 7. Business Rules
 
-* Every employee must have a unique Employee ID.
-* Attendance can be marked only once per day.
-* Leave requests require HR approval.
-* Only administrators can delete employee records.
-* Employees cannot approve their own leave requests.
+- Every user must be registered with a unique corporate email address.
+- Attendance clock-in can be recorded only once per employee per date.
+- Leave requests require explicit HR approval before deducting from an employee's annual balance.
+- Employees cannot approve or reject their own leave requests.
+- Only users assigned the `admin` role can create or deactivate user accounts.
 
 ---
 
-# 8. Security Requirements
+# 8. Testing & Validation Requirements
 
-* Encrypted passwords
-* Role-based authorization
-* Login authentication
-* Secure sessions
-* Access logging
-
----
-
-# 9. Assumptions
-
-* Internet connection is available.
-* Every employee has a valid account.
-* Database server is always accessible.
+The system shall be thoroughly validated using:
+- **Backend Testing:** `pytest` suites to verify FastAPI endpoints, response status codes, and database CRUD methods.
+- **Frontend Validation:** Component and integration testing for React forms and routing logic.
+- **Database Integrity Testing:** Transaction testing in SQLite to ensure foreign key constraint enforcement.
 
 ---
 
-# 10. Constraints
+# 9. Future Enhancements
 
-* Browser-based application.
-* HR approval required for leave.
-* Users cannot access unauthorized modules.
-
----
-
-# 11. Future Enhancements
-
-Future versions may include:
-
-* Mobile Application
-* Fingerprint Attendance
-* Face Recognition Attendance
-* Email Notifications
-* SMS Notifications
-* Payroll Integration
-
----
-
-# 12. Testing Requirements
-
-The system should be tested for:
-
-* Login functionality
-* Attendance recording
-* Leave processing
-* Report generation
-* User management
-* Security validation
-
----
-
-# 13. Acceptance Criteria
-
-The project will be considered successful if:
-
-* Users can log in successfully.
-* Attendance is recorded accurately.
-* Leave requests are processed correctly.
-* Reports are generated without errors.
-* The system performs securely and reliably.
+Potential future upgrades include:
+- Biometric & Face Recognition hardware integrations.
+- Mobile Application development using React Native.
+- Automated Email notifications via FastAPI background tasks.
+- Integration with external Payroll management software.
 
 ---
 
 # Conclusion
 
-The Employee Leave & Attendance Management System fulfils the software requirements by providing a secure, efficient, and user-friendly platform for attendance tracking and leave management. This SRS document serves as the foundation for system design, implementation, testing, and future maintenance.
+This Software Requirements Specification (SRS) establishes a complete technical blueprint for the **Employee Leave & Attendance Management System**. By pairing a responsive **React.js** frontend with a high-performance **FastAPI** backend and **SQLite** persistence, the system delivers a secure, accurate, and scalable solution for organizational workforce management.

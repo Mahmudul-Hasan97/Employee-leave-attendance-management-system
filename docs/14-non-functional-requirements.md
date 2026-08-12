@@ -1,135 +1,70 @@
 # Non-Functional Requirements
 
 ## Project Name
-
 Employee Leave & Attendance Management System
 
 ---
 
 # Introduction
 
-Non-functional requirements describe the quality attributes of the system including performance, security, reliability, usability, and maintainability.
+This document specifies the non-functional quality attributes of the **Employee Leave & Attendance Management System**. These non-functional requirements define performance metrics, security guarantees, usability standards, and system maintainability supported by the **React.js** frontend SPA, **FastAPI (Python)** backend, and **SQLite** database framework.
 
 ---
 
-# Performance
+# 1. Performance & Responsiveness
 
-The system shall respond within 3 seconds under normal workload.
-
-Attendance marking shall complete within 2 seconds.
-
-Reports shall be generated within 5 seconds.
+- **API Response Time:** The FastAPI backend API endpoints shall respond to HTTP requests within 200–500 milliseconds under normal operating workloads.
+- **Attendance Clock-In Execution:** Recording a daily clock-in or check-out shall take less than 1 second, updating the React UI instantaneously using virtual DOM updates.
+- **Report Generation:** Dashboard analytics queries executed against the SQLite database shall compile and render on the client interface in under 2 seconds.
 
 ---
 
-# Reliability
+# 2. Security & Data Protection
 
-The system shall be available 99% of the time.
-
-System shall recover automatically after unexpected failures.
-
----
-
-# Availability
-
-The application shall be available 24/7 except scheduled maintenance.
+- **Password Hashing:** All user passwords stored in the SQLite database shall be securely hashed using industry-standard cryptography (e.g., `bcrypt`).
+- **Role-Based Authorization (RBAC):** Access to administrative endpoints (`/api/admin/*`) and restricted React views shall be strictly gated based on authenticated user roles (*Admin* vs. *Employee*).
+- **CORS Protection:** The FastAPI backend shall enforce strict Cross-Origin Resource Sharing (CORS) policies to allow API interaction only from trusted client domain origins.
+- **Data Validation:** Both frontend forms (React) and backend models (FastAPI/Pydantic) shall sanitize input fields to prevent SQL injection and cross-site scripting (XSS).
 
 ---
 
-# Security
+# 3. Usability & Interface Design
 
-Passwords shall be encrypted.
-
-Role-based authorization shall be implemented.
-
-Unauthorized users shall not access protected resources.
-
-The system shall automatically logout inactive users after 15 minutes.
+- **Modern Single Page Application (SPA):** The frontend interface shall be built using React.js to ensure fast, seamless navigation without full page reloads.
+- **Responsive Layout:** UI components shall adapt gracefully to various screen resolutions across desktops, laptops, and tablets using HTML5, CSS3, and Bootstrap.
+- **Interactive Feedback:** Forms and action buttons shall provide clear validation messages, status badges (*Pending, Approved, Rejected*), and loading indicators.
 
 ---
 
-# Usability
+# 4. Maintainability & Modular Architecture
 
-User interface shall be simple and user-friendly.
-
-Navigation shall be consistent.
-
-Forms shall provide validation messages.
+- **Clean Decoupled Architecture:** The system architecture strictly decouples the client frontend (`frontend/`) from the RESTful backend service (`backend/`).
+- **Code Organization:** Python backend code shall utilize modular FastAPI routers, and React code shall maintain reusable components.
+- **Documentation:** System architecture, database schemas, and setup instructions shall be documented within the `docs/` folder and root `README.md`.
 
 ---
 
-# Maintainability
+# 5. Reliability & Availability
 
-Source code shall be modular.
-
-Documentation shall be maintained.
-
-Future features shall be easily integrated.
+- **System Uptime:** The local server setup running Uvicorn shall provide 99.9% uptime during operational testing hours.
+- **Database Transactional Integrity:** The lightweight SQLite engine shall guarantee ACID-compliant transactions to prevent data corruption during attendance logs or leave status updates.
 
 ---
 
-# Scalability
+# 6. Compatibility & Portability
 
-System shall support increasing numbers of employees.
-
-Database shall efficiently handle large attendance records.
-
----
-
-# Compatibility
-
-System shall support
-
-- Google Chrome
-
-- Microsoft Edge
-
-- Mozilla Firefox
+- **Cross-Browser Compatibility:** The React SPA shall function identically across modern web browsers, including Google Chrome, Mozilla Firefox, Microsoft Edge, and Safari.
+- **Platform Independence:** The Python FastAPI backend and Node.js React environment can run natively on Windows, macOS, and Linux operating systems.
 
 ---
 
-# Portability
+# 7. Scalability & Lightweight Storage
 
-Application shall run on Windows and Linux servers.
-
----
-
-# Backup
-
-Database backup shall be performed daily.
-
----
-
-# Recovery
-
-System shall restore backup data when required.
-
----
-
-# Logging
-
-All user activities shall be logged.
-
----
-
-# Audit Trail
-
-Administrator shall review activity logs.
-
----
-
-# Accessibility
-
-Application shall be usable on desktop and laptop devices.
-
----
-
-# Legal Requirements
-
-Employee information shall remain confidential.
+- **Optimized Data Indexing:** Primary and foreign keys in the SQLite database (`user_id` foreign keys in `attendance` and `leaves` tables) shall ensure efficient relational query execution as record volume grows.
+- **Efficient Asset Loading:** Bundled React production builds shall minimize asset sizes for rapid static file delivery.
 
 ---
 
 # Summary
 
-The system satisfies all major non-functional quality requirements including security, performance, reliability, maintainability, scalability, availability, and usability.
+The non-functional requirements guarantee that the Employee Leave & Attendance Management System delivers high performance, secure role-based permissions, clean maintainable code, and a highly responsive user experience powered by React.js and FastAPI.

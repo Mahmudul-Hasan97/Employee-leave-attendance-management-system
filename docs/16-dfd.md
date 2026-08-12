@@ -1,178 +1,52 @@
 # Data Flow Diagram (DFD)
 
 ## Project Name
-
 Employee Leave & Attendance Management System
 
 ---
 
 # Introduction
 
-A Data Flow Diagram (DFD) illustrates how information moves through the system. It identifies external entities, processes, data stores, and data flows.
+A Data Flow Diagram (DFD) illustrates how information moves through the **Employee Leave & Attendance Management System**. It highlights data transformations across external entities (Users), system processes (React SPA components & FastAPI API endpoints), and persistent data stores (SQLite database tables).
 
 ---
 
 # External Entities
 
-* Employee
-* HR Manager
-* Administrator
+- **Employee:** Interacts with the React UI to log attendance, apply for leaves, and view personal history.
+- **HR Manager:** Reviews leave applications, monitors organizational attendance, and generates reports.
+- **Administrator:** Manages user accounts, configures roles, and oversees database operations.
 
 ---
 
-# Main Processes
+# Data Stores (SQLite Relational Database)
 
-1. User Authentication
-2. Attendance Management
-3. Leave Management
-4. Employee Management
-5. Report Generation
+- **D1: `users` Table:** Stores user IDs, names, emails, hashed passwords, roles (*Admin/Employee*), and profile states.
+- **D2: `attendance` Table:** Stores attendance log IDs, foreign key `user_id`, timestamps, and status (*Present/Late/Absent*).
+- **D3: `leaves` Table:** Stores leave request IDs, foreign key `user_id`, leave type, start/end dates, reason, status (*Pending/Approved/Rejected*), and submission timestamps.
 
 ---
 
-# Data Stores
+# Level 0: Context Diagram
 
-* User Database
-* Employee Database
-* Attendance Database
-* Leave Database
-
----
-
-# Context Diagram
-
-```
-Employee
-      |
-      |
-      V
-
-+---------------------------------------+
-| Employee Leave & Attendance System    |
-+---------------------------------------+
-      ^
-      |
-HR Manager
-
-      ^
-      |
-Administrator
-```
-
----
-
-# DFD Level 0
-
-```
-Employee
-    |
-    | Attendance / Leave Request
-    V
-
-+----------------------------+
-| Attendance Management      |
-+----------------------------+
-
-            |
-
-            V
-
-Attendance Database
-
-
-Employee
-
-     |
-
-     V
-
-+----------------------------+
-| Leave Management           |
-+----------------------------+
-
-            |
-
-            V
-
-Leave Database
-```
-
----
-
-# DFD Level 1
-
-### Process 1
-
-Login Authentication
-
-Input
-
-* Username
-* Password
-
-Output
-
-* Dashboard
-
----
-
-### Process 2
-
-Attendance Recording
-
-Input
-
-* Employee ID
-* Date
-* Time
-
-Output
-
-Attendance Record
-
----
-
-### Process 3
-
-Leave Processing
-
-Input
-
-* Leave Form
-
-Output
-
-Approved / Rejected Status
-
----
-
-### Process 4
-
-Report Generation
-
-Input
-
-Attendance Data
-
-Leave Data
-
-Output
-
-Monthly Reports
-
----
-
-# Data Flow Summary
-
-| Process    | Input              | Output            |
-| ---------- | ------------------ | ----------------- |
-| Login      | Username, Password | Dashboard         |
-| Attendance | Employee ID        | Attendance Record |
-| Leave      | Leave Form         | Leave Status      |
-| Reports    | Attendance Data    | Reports           |
-
----
-
-# Conclusion
-
-The DFD clearly represents the movement of information among users, system processes, and databases. It helps developers understand how data flows through the Employee Leave & Attendance Management System.
+```text
+               ┌──────────────────────────────┐
+               │           Employee           │
+               └──────────────┬───────────────┘
+                              │
+       Clock-in Data,         │ Attendance Badges,
+       Leave Submissions      │ Leave Status Updates
+                              ▼
+        ┌───────────────────────────────────────────┐
+        │                                           │
+        │  Employee Leave & Attendance System       │
+        │  (React.js Frontend + FastAPI Backend)    │
+        │                                           │
+        └─────────────────────▲─────────────────────┘
+                              │
+          Admin CRUD,         │ Leave Approvals,
+          User Accounts       │ Summary Analytics
+                              │
+               ┌──────────────┴───────────────┐
+               │    HR Manager / Admin        │
+               └──────────────────────────────┘

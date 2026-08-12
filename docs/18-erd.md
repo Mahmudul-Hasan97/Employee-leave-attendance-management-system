@@ -1,246 +1,145 @@
 # Entity Relationship Diagram (ERD)
 
 ## Project Name
-
-**Employee Leave & Attendance Management System**
+Employee Leave & Attendance Management System
 
 ---
 
 # Introduction
 
-The Entity Relationship Diagram (ERD) illustrates the logical structure of the database used in the Employee Leave & Attendance Management System. It identifies the entities, their attributes, primary keys, foreign keys, and relationships.
+The Entity Relationship Diagram (ERD) illustrates the logical database structure and schema design for the **Employee Leave & Attendance Management System**. It specifies the relational database entities, their physical data attributes, primary keys, foreign keys, constraints, and cardinalities implemented in the **SQLite** relational engine via **SQLAlchemy ORM (Python FastAPI)**.
 
 ---
 
-# Objectives
+# Design Objectives
 
-The ERD is designed to:
-
-* Store employee information.
-* Record daily attendance.
-* Manage leave applications.
-* Maintain department details.
-* Authenticate users securely.
-* Support report generation.
+The database schema is engineered to:
+- **Normalize Data:** Eliminate data redundancy through 3NF relational modeling.
+- **Ensure Referential Integrity:** Enforce foreign key relationships across users, attendance records, and leave requests.
+- **Optimize Performance:** Enable fast REST API query execution times for FastAPI backend services.
+- **Support Authentication:** Securely store hashed user credentials and role definitions.
 
 ---
 
-# Main Entities
+# Core Database Entities & Schema Definition
 
-The system contains the following entities:
+### Entity 1: `departments`
+Stores organizational department units.
 
-1. Users
-2. Employees
-3. Departments
-4. Attendance
-5. Leave Requests
-
----
-
-# Entity 1: Users
-
-Purpose:
-Stores login credentials and user roles.
-
-| Attribute | Data Type    | Key         |
-| --------- | ------------ | ----------- |
-| user_id   | INT          | Primary Key |
-| username  | VARCHAR(50)  | Unique      |
-| password  | VARCHAR(255) |             |
-| role      | VARCHAR(20)  |             |
-| status    | VARCHAR(20)  |             |
+| Attribute | SQLite Data Type | Key / Constraint | Description |
+| :--- | :--- | :--- | :--- |
+| `department_id` | `INTEGER` | **Primary Key** (Auto-Increment) | Unique identifier for each department |
+| `department_name` | `TEXT` | `NOT NULL`, `UNIQUE` | Name of the department (*e.g., HR, Engineering*) |
 
 ---
 
-# Entity 2: Employees
+### Entity 2: `users`
+Stores unified employee profiles, administrative credentials, and role assignments.
 
-Purpose:
-Stores employee personal information.
-
-| Attribute     | Data Type    | Key         |
-| ------------- | ------------ | ----------- |
-| employee_id   | INT          | Primary Key |
-| first_name    | VARCHAR(50)  |             |
-| last_name     | VARCHAR(50)  |             |
-| email         | VARCHAR(100) | Unique      |
-| phone         | VARCHAR(20)  |             |
-| department_id | INT          | Foreign Key |
-| joining_date  | DATE         |             |
-
----
-
-# Entity 3: Departments
-
-Purpose:
-Stores department information.
-
-| Attribute       | Data Type    | Key         |
-| --------------- | ------------ | ----------- |
-| department_id   | INT          | Primary Key |
-| department_name | VARCHAR(100) |             |
+| Attribute | SQLite Data Type | Key / Constraint | Description |
+| :--- | :--- | :--- | :--- |
+| `user_id` | `INTEGER` | **Primary Key** (Auto-Increment) | Unique identifier for each system user |
+| `name` | `TEXT` | `NOT NULL` | Full name of the user |
+| `email` | `TEXT` | `NOT NULL`, `UNIQUE` | Corporate email used for login |
+| `password_hash` | `TEXT` | `NOT NULL` | Bcrypt-hashed password string |
+| `role` | `TEXT` | `NOT NULL`, `DEFAULT 'employee'` | System access role (*admin, hr, employee*) |
+| `department_id` | `INTEGER` | **Foreign Key** (`departments.department_id`) | Department assignment |
+| `leave_balance` | `INTEGER` | `NOT NULL`, `DEFAULT 20` | Remaining annual leave allowance |
+| `created_at` | `TEXT` | `NOT NULL` | ISO timestamp of user creation |
 
 ---
 
-# Entity 4: Attendance
+### Entity 3: `attendance`
+Stores daily clock-in and check-out logs recorded by employees.
 
-Purpose:
-Stores employee attendance records.
-
-| Attribute       | Data Type   | Key         |
-| --------------- | ----------- | ----------- |
-| attendance_id   | INT         | Primary Key |
-| employee_id     | INT         | Foreign Key |
-| attendance_date | DATE        |             |
-| check_in        | TIME        |             |
-| check_out       | TIME        |             |
-| status          | VARCHAR(20) |             |
+| Attribute | SQLite Data Type | Key / Constraint | Description |
+| :--- | :--- | :--- | :--- |
+| `attendance_id` | `INTEGER` | **Primary Key** (Auto-Increment) | Unique attendance log identifier |
+| `user_id` | `INTEGER` | **Foreign Key** (`users.user_id`) | Associated employee reference |
+| `date` | `TEXT` | `NOT NULL` | Date of attendance log (`YYYY-MM-DD`) |
+| `check_in` | `TEXT` | `NOT NULL` | Timestamp of check-in (`HH:MM:SS`) |
+| `check_out` | `TEXT` | `NULLABLE` | Timestamp of check-out (`HH:MM:SS`) |
+| `status` | `TEXT` | `NOT NULL`, `DEFAULT 'Present'` | Attendance state (*Present, Late, Half-Day*) |
 
 ---
 
-# Entity 5: Leave Requests
+### Entity 4: `leaves`
+Stores leave applications and HR review statuses.
 
-Purpose:
-Stores leave application information.
-
-| Attribute       | Data Type   | Key         |
-| --------------- | ----------- | ----------- |
-| leave_id        | INT         | Primary Key |
-| employee_id     | INT         | Foreign Key |
-| leave_type      | VARCHAR(30) |             |
-| start_date      | DATE        |             |
-| end_date        | DATE        |             |
-| reason          | TEXT        |             |
-| approval_status | VARCHAR(20) |             |
-
----
-
-# Relationships
-
-## Users → Employees
-
-Relationship:
-
-One User account belongs to one Employee.
-
-Cardinality:
-
-1 : 1
+| Attribute | SQLite Data Type | Key / Constraint | Description |
+| :--- | :--- | :--- | :--- |
+| `leave_id` | `INTEGER` | **Primary Key** (Auto-Increment) | Unique leave request identifier |
+| `user_id` | `INTEGER` | **Foreign Key** (`users.user_id`) | Requesting employee reference |
+| `leave_type` | `TEXT` | `NOT NULL` | Classification (*Casual, Medical, Annual*) |
+| `start_date` | `TEXT` | `NOT NULL` | Leave start date (`YYYY-MM-DD`) |
+| `end_date` | `TEXT` | `NOT NULL` | Leave end date (`YYYY-MM-DD`) |
+| `reason` | `TEXT` | `NOT NULL` | Detailed justification for request |
+| `status` | `TEXT` | `NOT NULL`, `DEFAULT 'pending'` | Current review state (*pending, approved, rejected*) |
+| `applied_at` | `TEXT` | `NOT NULL` | ISO timestamp of application submission |
 
 ---
 
-## Department → Employees
-
-Relationship:
-
-One Department contains many Employees.
-
-Cardinality:
-
-1 : N
-
----
-
-## Employee → Attendance
-
-Relationship:
-
-One Employee has many Attendance Records.
-
-Cardinality:
-
-1 : N
-
----
-
-## Employee → Leave Requests
-
-Relationship:
-
-One Employee can submit multiple Leave Requests.
-
-Cardinality:
-
-1 : N
-
----
-
-# ERD (Text Representation)
+# Entity Relationships & Cardinalities
 
 ```text
-Departments
---------------
-department_id (PK)
-department_name
-        |
-        | 1
-        |
-        | N
-Employees
---------------
-employee_id (PK)
-department_id (FK)
-name
-email
-phone
-        |
-        |1
-        |
-        |N
-Attendance
---------------
-attendance_id (PK)
-employee_id (FK)
-date
-check_in
-check_out
-status
+┌───────────────────────────┐
+│        departments        │
+├───────────────────────────┤
+│ PK  department_id         │
+│     department_name       │
+└─────────────┬─────────────┘
+              │ 1
+              │
+              │ N
+┌─────────────┴─────────────┐
+│           users           │
+├───────────────────────────┤
+│ PK  user_id               │
+│ FK  department_id         │
+│     name                  │
+│     email                 │
+│     password_hash         │
+│     role                  │
+│     leave_balance         │
+└──────┬─────────────┬──────┘
+       │ 1           │ 1
+       │             │
+       │ N           │ N
+┌──────┴──────┐┌─────┴──────┐
+│ attendance  ││   leaves   │
+├─────────────┤├────────────┤
+│ PK att_id   ││ PK leave_id│
+│ FK user_id  ││ FK user_id │
+│    date     ││    type    │
+│    check_in ││    status  │
+└─────────────┘└────────────┘
+Relationship Breakdown
+departments → users (1 : N)
 
-Employees
-        |
-        |1
-        |
-        |N
-Leave Requests
---------------
-leave_id (PK)
-employee_id (FK)
-leave_type
-start_date
-end_date
-status
+One department contains multiple employees (users).
 
-Users
---------------
-user_id (PK)
-username
-password
-role
-status
-```
+Each user belongs to exactly one department.
 
----
+users → attendance (1 : N)
 
-# Data Integrity Rules
+One employee (users) generates multiple daily attendance logs over time.
 
-* Every Employee must belong to one Department.
-* Attendance cannot exist without an Employee.
-* Leave Requests must reference an Employee.
-* Usernames must be unique.
-* Primary keys must be unique.
-* Foreign keys must maintain referential integrity.
+Each attendance record belongs strictly to one employee.
 
----
+users → leaves (1 : N)
 
-# Advantages of ERD
+One employee (users) can submit multiple leave requests throughout the year.
 
-* Reduces data redundancy.
-* Improves database consistency.
-* Simplifies relationship management.
-* Supports future scalability.
-* Makes implementation easier.
+Each leave request belongs strictly to one employee.
 
----
+Data Integrity Rules & Constraints
+Foreign Key Constraints: Enabled in SQLite via PRAGMA foreign_keys = ON; in FastAPI connection startup.
 
-# Conclusion
+Unique Constraints: The email field in users and department_name in departments must be strictly unique.
 
-The Entity Relationship Diagram provides a structured database design for the Employee Leave & Attendance Management System. It clearly defines entities, relationships, and constraints, ensuring efficient data storage and retrieval.
+Cascade Deletes: Deleting a user profile handles orphan records predictably across attendance and leaves tables via SQLAlchemy ORM relationship configuration.
+
+Default Statuses: New leave applications default to 'pending', and new user roles default to 'employee'.
+
+Conclusion
+This Entity Relationship Diagram provides a structured relational blueprint for the Employee Leave & Attendance Management System. By translating these specifications into SQLAlchemy ORM models, the backend seamlessly maintains data consistency and ACID transaction safety within the SQLite database.

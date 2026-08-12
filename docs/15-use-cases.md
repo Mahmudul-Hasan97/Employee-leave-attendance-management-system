@@ -1,171 +1,160 @@
 # Use Cases
 
 ## Project Name
-
-**Employee Leave & Attendance Management System**
+Employee Leave & Attendance Management System
 
 ---
 
 # Introduction
 
-A use case describes how users interact with the system to accomplish a specific task. The system has three primary actors:
-
-* Administrator
-* HR Manager
-* Employee
+This document details the Use Cases for the **Employee Leave & Attendance Management System**. Use cases describe how primary and secondary actors interact with the **React.js** frontend application, which triggers asynchronous REST API endpoints handled by the **FastAPI (Python)** backend and stored in the **SQLite** relational database.
 
 ---
 
-# Actors
+# Primary Actors
 
-| Actor         | Description                            |
-| ------------- | -------------------------------------- |
-| Administrator | Manages the overall system             |
-| HR Manager    | Manages employee attendance and leave  |
-| Employee      | Marks attendance and applies for leave |
+| Actor | Description | System Scope |
+| :--- | :--- | :--- |
+| **System Administrator** | Manages system user accounts, configures role access, and oversees database health. | Full System & Administrative Privileges |
+| **HR Manager / Admin** | Monitors attendance, reviews leave applications, and generates organizational summaries. | HR Management Panel & Reports |
+| **Employee** | Records daily attendance clock-ins, submits leave requests, and tracks history. | Employee Self-Service Dashboard |
 
 ---
 
-# UC-01 Login
+# UC-01: User Login & Session Initialization
 
-### Actor
-
+### Primary Actor
 Employee / HR Manager / Administrator
 
 ### Preconditions
+- User profile is registered in the SQLite database.
+- User possesses valid email and password credentials.
 
-* User is registered.
-* User has valid credentials.
+### Main Flow (React → FastAPI → SQLite)
+1. User navigates to the React SPA login page.
+2. User enters registered Email and Password into the form and clicks **Login**.
+3. React sends an asynchronous `POST` request to `/api/login`.
+4. FastAPI validates the password hash against the stored SQLite `users` record.
+5. FastAPI returns a successful response containing an authentication token and role data.
+6. React stores the session state and redirects the user to their role-specific dashboard.
 
-### Main Flow
-
-1. Open Login Page.
-2. Enter Username.
-3. Enter Password.
-4. Click Login.
-5. System validates credentials.
-6. Dashboard opens.
-
-### Alternative Flow
-
-* Invalid username/password.
-* Error message displayed.
+### Alternative / Error Flow
+- **Invalid Credentials:** FastAPI returns HTTP 401 Unauthorized; React displays an error toast message without redirecting.
 
 ### Postconditions
-
-User successfully logs in.
+- User is authenticated and granted access to authorized routes.
 
 ---
 
-# UC-02 Mark Attendance
+# UC-02: Digital Clock-In & Attendance Recording
 
-### Actor
-
+### Primary Actor
 Employee
 
 ### Preconditions
-
-Employee is logged in.
+- Employee is authenticated and viewing the Employee Dashboard.
 
 ### Main Flow
-
-1. Open Dashboard.
-2. Click "Mark Attendance".
-3. System records current date and time.
-4. Confirmation message displayed.
+1. Employee views the daily attendance widget on the React interface.
+2. Employee clicks the **Check In** or **Check Out** button.
+3. React sends a `POST` request to `/api/attendance` with user ID and current timestamp.
+4. FastAPI creates a new attendance log entry in the SQLite `attendance` table.
+5. FastAPI returns a success payload.
+6. React UI updates the button state instantly to reflect the recorded status.
 
 ### Postconditions
-
-Attendance saved successfully.
+- Daily attendance entry is successfully persisted in SQLite.
 
 ---
 
-# UC-03 Apply Leave
+# UC-03: Submit Online Leave Application
 
-### Actor
-
+### Primary Actor
 Employee
 
 ### Preconditions
-
-Employee is logged in.
+- Employee is authenticated and has an available leave balance.
 
 ### Main Flow
-
-1. Open Leave Module.
-2. Click Apply Leave.
-3. Select Leave Type.
-4. Select Date.
-5. Enter Reason.
-6. Submit Request.
+1. Employee opens the Leave Request module on the React dashboard.
+2. Employee selects Leave Type (*Casual, Medical, Annual*), Start Date, End Date, and enters a Reason.
+3. Employee clicks **Submit Request**.
+4. React sends a `POST` request to `/api/leaves`.
+5. FastAPI inserts a new record into the SQLite `leaves` table with a default status of `pending`.
+6. React UI displays a success confirmation and adds the entry to the employee's pending leave table.
 
 ### Postconditions
-
-Leave request sent to HR.
+- Leave request is saved in SQLite and pending HR review.
 
 ---
 
-# UC-04 Approve Leave
+# UC-04: Review & Approve/Reject Leave Request
 
-### Actor
-
-HR Manager
+### Primary Actor
+HR Manager / Admin
 
 ### Preconditions
-
-HR Manager logged in.
-
-### Main Flow
-
-1. Open Leave Requests.
-2. Review Request.
-3. Click Approve.
-4. System updates status.
-5. Employee receives notification.
-
-### Alternative Flow
-
-Reject request with reason.
-
----
-
-# UC-05 Manage Employees
-
-### Actor
-
-Administrator
+- HR Manager is authenticated and viewing the HR Leave Approval panel.
 
 ### Main Flow
+1. HR Manager views the list of pending employee leave requests fetched via `GET /api/leaves`.
+2. HR Manager inspects request details and clicks **Approve** (or **Reject**).
+3. React sends a `PUT` request to `/api/leaves/{id}` with the updated status.
+4. FastAPI updates the leave status in SQLite.
+5. If approved, FastAPI automatically recalculates and deducts the taken days from the employee's remaining leave balance.
+6. React UI updates the status badge to `Approved` or `Rejected` in real-time.
 
-* Add Employee
-* Update Employee
-* Delete Employee
-* Search Employee
-
----
-
-# UC-06 Generate Reports
-
-### Actor
-
-Administrator / HR Manager
-
-### Reports
-
-* Attendance Report
-* Leave Report
-* Monthly Summary
-* Employee Report
+### Postconditions
+- Leave status and updated leave balances are permanently recorded.
 
 ---
 
-# Use Case Summary
+# UC-05: Manage Employee Profiles (CRUD)
 
-| ID    | Use Case         | Actor      |
-| ----- | ---------------- | ---------- |
-| UC-01 | Login            | All Users  |
-| UC-02 | Mark Attendance  | Employee   |
-| UC-03 | Apply Leave      | Employee   |
-| UC-04 | Approve Leave    | HR         |
-| UC-05 | Manage Employees | Admin      |
-| UC-06 | Generate Reports | Admin / HR |
+### Primary Actor
+System Administrator / HR Manager
+
+### Preconditions
+- Admin is authenticated with administrative privileges.
+
+### Main Flow
+1. Admin navigates to the Employee Management panel.
+2. Admin performs desired operation:
+   - **Create:** Enters new employee details and role; React posts to `/api/users`.
+   - **Update:** Modifies profile details; React sends a `PUT` request.
+   - **Deactivate:** Deactivates user access; React sends a status change request.
+3. FastAPI executes the SQL query using SQLAlchemy ORM to update the SQLite database.
+4. React re-renders the updated employee list table.
+
+### Postconditions
+- Employee records are kept accurate in the database.
+
+---
+
+# UC-06: Generate Attendance & Leave Summary Reports
+
+### Primary Actor
+HR Manager / Administrator
+
+### Preconditions
+- Actor is authenticated and on the Analytics & Reports panel.
+
+### Main Flow
+1. User selects date filters or department parameters and clicks **Generate Report**.
+2. React sends a request to backend reporting endpoints.
+3. FastAPI executes aggregate queries on SQLite `attendance` and `leaves` tables.
+4. FastAPI returns summary JSON data.
+5. React dynamically renders visual graphs, percentage indicators, and exportable data tables.
+
+---
+
+# Use Case Summary Matrix
+
+| Use Case ID | Use Case Name | Primary Actor | Trigger Endpoint | Primary Database Table |
+| :--- | :--- | :--- | :--- | :--- |
+| **UC-01** | User Login | All Users | `POST /api/login` | `users` |
+| **UC-02** | Mark Attendance | Employee | `POST /api/attendance` | `attendance` |
+| **UC-03** | Apply Leave | Employee | `POST /api/leaves` | `leaves` |
+| **UC-04** | Approve / Reject Leave | HR Manager | `PUT /api/leaves/{id}` | `leaves`, `users` |
+| **UC-05** | Manage Employees | Admin / HR | `/api/users/*` | `users` |
+| **UC-06** | Generate Reports | Admin / HR | `/api/reports/*` | `attendance`, `leaves` |

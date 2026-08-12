@@ -2,51 +2,45 @@
 
 ## Background
 
-Many organisations still manage employee attendance and leave manually using paper forms or spreadsheets. These methods are inefficient, time-consuming, and prone to human errors.
+Many organisations still manage employee attendance and leave manually using paper forms, physical registers, or unintegrated spreadsheets. These legacy methods are inefficient, time-consuming, prone to human errors, and lack real-time visibility for both employees and HR managers.
 
 ---
 
-## Existing Problems
+## Existing Problems in Legacy Systems
 
-### Manual Attendance
+### Manual Attendance Tracking
+Employees mark attendance manually on physical sign-in sheets or disconnected logs, increasing the chances of proxy attendance and inaccurate time-tracking entries.
 
-Employees mark attendance manually, increasing the chances of incorrect records.
+### Paper-Based Leave Applications
+Employees submit leave requests via paper forms or informal emails, making it difficult for HR personnel to maintain a organized history and track active requests.
 
-### Paper-Based Leave Requests
+### Delayed Approvals & Bottlenecks
+Without a centralized dashboard, managers and administrators take longer to review, approve, or reject leave applications, leading to operational delays.
 
-Employees submit leave applications on paper, making tracking difficult.
+### Human Errors in Calculations
+Calculating monthly attendance percentages and remaining leave balances manually frequently leads to discrepancies and accounting mistakes.
 
-### Delayed Approval
+### Data Loss & Security Risks
+Physical paper records and local spreadsheets can easily be lost, damaged, or accessed by unauthorized individuals without access control.
 
-Managers often take longer to review paper applications.
-
-### Human Errors
-
-Attendance calculations and leave balances may contain mistakes.
-
-### Data Loss
-
-Physical records can be lost or damaged.
-
-### Lack of Reports
-
-Generating attendance reports manually requires significant effort.
+### Lack of Real-Time Reporting
+Generating attendance and leave summaries manually requires significant effort and time, delaying managerial decision-making.
 
 ---
 
 ## Need for the Proposed System
 
-The proposed Employee Leave & Attendance Management System addresses these challenges by providing:
+The proposed **Employee Leave & Attendance Management System** addresses these operational challenges by leveraging a modern **React.js** dynamic frontend and a high-performance **Python (FastAPI)** backend. The solution provides:
 
-- Digital attendance recording
-- Online leave requests
-- Automatic leave balance calculation
-- Secure database storage
-- Report generation
-- Real-time leave tracking
+- **Automated Digital Attendance:** Instant clock-in/clock-out tracking via an interactive web interface.
+- **Online Leave Request Workflow:** Streamlined submit-and-approve functionality for employees and admins.
+- **Automated Balance Calculations:** Real-time updates to leave balances using structured backend logic.
+- **Secure & Lightweight Persistence:** Centralized data storage using an optimized **SQLite** database schema.
+- **Instant Report Generation:** Real-time summary views on the admin dashboard.
+- **Role-Based Access Control:** Strict permission-based security separating employee views from admin management panels.
 
 ---
 
 ## Conclusion
 
-The proposed system improves operational efficiency, minimises manual work, and provides accurate attendance and leave management for organisations.
+By transitioning from manual processes to this FastAPI and React-powered system, organisations eliminate operational bottlenecks, reduce administrative overhead, ensure data accuracy, and significantly improve workforce management efficiency.
