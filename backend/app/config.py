@@ -1,14 +1,23 @@
 import os
-from pydantic_settings import BaseSettings
+from pathlib import Path
 
-class Settings(BaseSettings):
-    PROJECT_NAME: str = "Employee Leave & Attendance System"
-    DATABASE_URL: str = "sqlite:///./employee_system.db"
-    SECRET_KEY: str = "your-super-secret-key-change-this-in-production"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+from dotenv import load_dotenv
 
-    class Config:
-        env_file = ".env"
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
+
+
+class Settings:
+    PROJECT_NAME = "Employee Leave & Attendance System"
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./employee_system_v2.db")
+    SECRET_KEY = os.getenv(
+        "SECRET_KEY",
+        "dev-only-change-this-secret-key-before-deployment",
+    )
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+
 
 settings = Settings()
+
+if os.getenv("ENVIRONMENT", "development").lower() == "production" and settings.SECRET_KEY.startswith("dev-only-"):
+    raise RuntimeError("Set a strong SECRET_KEY before running in production.")

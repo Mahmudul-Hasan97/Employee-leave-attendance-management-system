@@ -1,77 +1,74 @@
-from app.database import SessionLocal, engine, Base
-from app.models import User, Attendance, LeaveRequest
-from passlib.context import CryptContext
 from datetime import date
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app import models
+from app.database import SessionLocal, initialize_database
+from app.utils import get_password_hash
 
-def seed_database():
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
+DEMO_USERS = (
+    ("System Admin", "admin@gmail.com", "admin123", "admin"),
+    ("John Doe", "employee@gmail.com", "employee123", "employee"),
+)
 
-    try:
-        # Check if users already exist
-        if db.query(User).first():
-            print("Database already seeded!")
-            return
 
-        # 1. Create Users
-        admin_user = User(
-            name="System Admin",
-            email="admin@gmail.com",
-            password=pwd_context.hash("admin123"),
-            role="admin"
-        )
+def seed_database() -> None:
+    initialize_database()
+    with SessionLocal() as db, db.begin():
+        users = {}
+        for name, email, password, role in DEMO_USERS:
+            user = db.query(models.User).filter(models.User.email == email).first()
+            if user is None:
+                user = models.User(
+                    name=name,
+                    email=email,
+                    password=get_password_hash(password),
+                    role=role,
+                )
+                db.add(user)
+                db.flush()
+            elif not user.password:
+                user.password = get_password_hash(password)
+            users[email] = user
 
-        employee_user = User(
-            name="John Doe",
-            email="employee@gmail.com",
-            password=pwd_context.hash("123456"),
-            role="employee"
-        )
+        employee = users["employee@gmail.com"]
+        if not db.query(models.Attendance).filter(
+            models.Attendance.user_id == employee.id
+        ).first():
+            db.add_all(
+                [
+                    models.Attendance(
+                        user_id=employee.id,
+                        user_name=employee.name,
+                        date="2026-08-10",
+                        clock_in="09:00 AM",
+                        clock_out="05:00 PM",
+                        status="Present",
+                    ),
+                    models.Attendance(
+                        user_id=employee.id,
+                        user_name=employee.name,
+                        date="2026-08-11",
+                        clock_in="09:15 AM",
+                        clock_out="05:05 PM",
+                        status="Present",
+                    ),
+                ]
+            )
 
-        db.add(admin_user)
-        db.add(employee_user)
-        db.commit()
-        db.refresh(employee_user)
+        if not db.query(models.LeaveRequest).filter(
+            models.LeaveRequest.user_id == employee.id
+        ).first():
+            db.add(
+                models.LeaveRequest(
+                    user_id=employee.id,
+                    user_name=employee.name,
+                    start_date=date(2026, 8, 15).isoformat(),
+                    end_date=date(2026, 8, 18).isoformat(),
+                    reason="Sick Leave",
+                    status="Pending",
+                )
+            )
+    print("Database is ready. Demo accounts: admin@gmail.com / admin123 and employee@gmail.com / employee123.")
 
-        # 2. Create Sample Attendance
-        att1 = Attendance(
-            user_id=employee_user.id,
-            date="2026-08-10",
-            clock_in="09:00 AM",
-            clock_out="05:00 PM",
-            status="Present"
-        )
-        att2 = Attendance(
-            user_id=employee_user.id,
-            date="2026-08-11",
-            clock_in="09:15 AM",
-            clock_out="05:05 PM",
-            status="Present"
-        )
-
-        # 3. Create Sample Leave Request
-        leave1 = LeaveRequest(
-            user_id=employee_user.id,
-            start_date=date(2026, 8, 15),
-            end_date=date(2026, 8, 18),
-            reason="Sick Leave",
-            status="Pending"
-        )
-
-        db.add(att1)
-        db.add(att2)
-        db.add(leave1)
-        db.commit()
-
-        print("Successfully seeded database with Users, Attendance, and Leaves!")
-
-    except Exception as e:
-        db.rollback()
-        print(f"Error seeding database: {e}")
-    finally:
-        db.close()
 
 if __name__ == "__main__":
     seed_database()

@@ -1,39 +1,40 @@
-import React, { useState, useEffect } from "react";
-import API from "../services/api";
+import { useState, useEffect } from "react";
+import API, { getApiErrorMessage, getStoredUser } from "../services/api";
 
 export default function Reports() {
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [error, setError] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getStoredUser();
 
   useEffect(() => {
-    fetchReportData();
+    let active = true;
+    Promise.all([API.get("/attendance"), API.get("/leaves")])
+      .then(([attendanceResponse, leaveResponse]) => {
+        if (!active) return;
+        if (Array.isArray(attendanceResponse.data)) setAttendance(attendanceResponse.data);
+        if (Array.isArray(leaveResponse.data)) setLeaves(leaveResponse.data);
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(getApiErrorMessage(requestError, "Could not load report data."));
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const fetchReportData = async () => {
-    try {
-      const [attRes, leaveRes] = await Promise.all([
-        API.get("/attendance"),
-        API.get("/leaves")
-      ]);
-      if (Array.isArray(attRes.data)) setAttendance(attRes.data);
-      if (Array.isArray(leaveRes.data)) setLeaves(leaveRes.data);
-    } catch (err) {
-      console.error("Error loading report data:", err);
-    }
-  };
-
-  // CSV Report Download Function
   const handleDownloadCSV = async () => {
     setIsDownloading(true);
+    setError("");
     try {
       const response = await API.get("/reports/download", {
-        responseType: "blob", // Important for file download
+        responseType: "blob",
       });
 
-      // Create a blob link to download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -41,9 +42,9 @@ export default function Reports() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
-      console.error("Failed to download report:", err);
-      alert("Report download failed. Please try again!");
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Could not download the report."));
     } finally {
       setIsDownloading(false);
     }
@@ -55,7 +56,7 @@ export default function Reports() {
         <div>
           <h1 style={{ marginBottom: "5px" }}>Reports & Analytics</h1>
           <p style={{ color: "#94a3b8", fontSize: "14px" }}>
-            Viewing as: <strong style={{ color: "#38bdf8", textTransform: "capitalize" }}>{user.role || "User"}</strong> ({user.name})
+            Viewing as: <strong style={{ color: "#38bdf8", textTransform: "capitalize" }}>{user.role || "User"}</strong> ({user.name || user.email})
           </p>
         </div>
 
@@ -79,9 +80,12 @@ export default function Reports() {
         </button>
       </div>
 
+      {error && <p role="alert" style={{ color: "#f87171" }}>{error}</p>}
+
       {/* Attendance Summary Preview */}
       <div style={{ backgroundColor: "#1e293b", padding: "20px", borderRadius: "8px", marginBottom: "30px" }}>
         <h3 style={{ color: "#38bdf8", marginBottom: "15px" }}>Attendance Records</h3>
+        <div className="table-scroll">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ backgroundColor: "#0f172a", color: "#94a3b8", textAlign: "left" }}>
@@ -106,11 +110,13 @@ export default function Reports() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Leave Summary Preview */}
       <div style={{ backgroundColor: "#1e293b", padding: "20px", borderRadius: "8px" }}>
         <h3 style={{ color: "#eab308", marginBottom: "15px" }}>Leave Records</h3>
+        <div className="table-scroll">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ backgroundColor: "#0f172a", color: "#94a3b8", textAlign: "left" }}>
@@ -137,6 +143,7 @@ export default function Reports() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

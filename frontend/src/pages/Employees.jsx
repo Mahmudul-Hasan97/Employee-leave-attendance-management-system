@@ -1,46 +1,57 @@
-import React, { useState, useEffect } from "react";
-import API from "../services/api";
+import { useState, useEffect } from "react";
+import API, { getApiErrorMessage } from "../services/api";
 
 export default function Employees() {
   const [employees, setEmployees] = useState([]);
-  const [formData, setFormData] = useState({ name: "", email: "", role: "employee" });
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "employee" });
 
   useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await API.get("/employees");
-      if (Array.isArray(res.data)) {
-        setEmployees(res.data);
+    const loadEmployees = async () => {
+      try {
+        const res = await API.get("/employees");
+        if (Array.isArray(res.data)) {
+          setEmployees(res.data);
+        }
+      } catch (err) {
+        setError(getApiErrorMessage(err, "Could not load employees."));
       }
-    } catch (err) {
-      console.error("Error fetching employees:", err);
-    }
-  };
+    };
+
+    loadEmployees();
+  }, []);
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) return;
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
 
     try {
       const res = await API.post("/employees", formData);
       if (res.data) {
-        setEmployees([...employees, res.data]);
-        setFormData({ name: "", email: "", role: "employee" });
+        setEmployees((currentEmployees) => [...currentEmployees, res.data]);
+        setFormData({ name: "", email: "", password: "", role: "employee" });
+        setNotice("Employee added successfully.");
       }
-    } catch (err) {
-      console.error("Failed to add employee:", err);
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Could not add the employee."));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
+    setError("");
+    setNotice("");
     try {
       await API.delete(`/employees/${id}`);
-      setEmployees(employees.filter((emp) => emp.id !== id));
-    } catch (err) {
-      console.error("Failed to delete employee:", err);
+      setEmployees((currentEmployees) => currentEmployees.filter((emp) => emp.id !== id));
+      setNotice("Employee deleted.");
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Could not delete the employee."));
     }
   };
 
@@ -48,7 +59,10 @@ export default function Employees() {
     <div>
       <h1 style={{ marginBottom: "20px" }}>Employee Management</h1>
 
-      <form onSubmit={handleAddEmployee} style={{ display: "flex", gap: "10px", marginBottom: "30px" }}>
+      {error && <p role="alert" style={{ color: "#f87171" }}>{error}</p>}
+      {notice && <p role="status" style={{ color: "#4ade80" }}>{notice}</p>}
+
+      <form className="responsive-form employee-form" onSubmit={handleAddEmployee}>
         <input
           type="text"
           placeholder="Employee Name"
@@ -65,6 +79,15 @@ export default function Employees() {
           required
           style={{ padding: "10px", borderRadius: "5px", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff", flex: 1 }}
         />
+        <input
+          type="password"
+          placeholder="Temporary password (8+ characters)"
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          minLength={8}
+          required
+          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff", flex: 1 }}
+        />
         <select
           value={formData.role}
           onChange={(e) => setFormData({ ...formData, role: e.target.value })}
@@ -74,11 +97,12 @@ export default function Employees() {
           <option value="admin">Admin</option>
         </select>
 
-        <button type="submit" style={{ padding: "10px 20px", backgroundColor: "#0284c7", color: "#fff", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: "pointer" }}>
-          Add Employee
+        <button type="submit" disabled={isSubmitting} style={{ padding: "10px 20px", backgroundColor: "#0284c7", color: "#fff", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: isSubmitting ? "wait" : "pointer" }}>
+          {isSubmitting ? "Adding..." : "Add Employee"}
         </button>
       </form>
 
+      <div className="table-scroll">
       <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#1e293b", borderRadius: "8px", overflow: "hidden" }}>
         <thead>
           <tr style={{ backgroundColor: "#0284c7", color: "#ffffff", textAlign: "left" }}>
@@ -109,6 +133,7 @@ export default function Employees() {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

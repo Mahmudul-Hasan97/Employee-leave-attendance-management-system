@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -9,10 +8,16 @@ import Leaves from "./pages/Leaves";
 import Profile from "./pages/Profile";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import { getStoredUser } from "./services/api";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, adminOnly = false }) => {
   const token = localStorage.getItem("token");
-  return token ? <Layout>{children}</Layout> : <Navigate to="/login" replace />;
+  const user = getStoredUser();
+  if (!token) return <Navigate to="/login" replace />;
+  if (adminOnly && user.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Layout>{children}</Layout>;
 };
 
 export default function App() {
@@ -22,7 +27,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+        <Route path="/employees" element={<ProtectedRoute adminOnly><Employees /></ProtectedRoute>} />
         <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
         {/* Supporting both /leave and /leaves to fix routing issue */}
         <Route path="/leave" element={<ProtectedRoute><Leaves /></ProtectedRoute>} />

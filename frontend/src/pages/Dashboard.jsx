@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import API from "../services/api";
+import { useState, useEffect } from "react";
+import API, { getApiErrorMessage, getStoredUser } from "../services/api";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -9,23 +9,25 @@ export default function Dashboard() {
     pending_leaves: 0,
     pending_attendances: 0,
   });
+  const [error, setError] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getStoredUser();
 
   useEffect(() => {
-    fetchStats();
+    let active = true;
+    API.get("/dashboard/stats")
+      .then(({ data }) => {
+        if (active) setStats(data);
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(getApiErrorMessage(requestError, "Could not load dashboard statistics."));
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await API.get("/dashboard/stats");
-      if (res.data) {
-        setStats(res.data);
-      }
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-    }
-  };
 
   return (
     <div>
@@ -33,6 +35,8 @@ export default function Dashboard() {
       <p style={{ color: "#94a3b8", marginBottom: "30px" }}>
         Role: <strong style={{ color: "#38bdf8", textTransform: "capitalize" }}>{user.role || "Employee"}</strong>
       </p>
+
+      {error && <p role="alert" style={{ color: "#f87171" }}>{error}</p>}
 
       {/* Stats Cards Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>

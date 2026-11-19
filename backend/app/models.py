@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
+
 from app.database import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -9,33 +11,46 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(String, nullable=False)  # "employee" or "admin"
+    role = Column(String, nullable=False, default="employee")
 
-    attendances = relationship("Attendance", back_populates="user", cascade="all, delete-orphan")
-    leaves = relationship("LeaveRequest", back_populates="user", cascade="all, delete-orphan")
+    attendances = relationship(
+        "Attendance",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    leaves = relationship(
+        "LeaveRequest",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
 class Attendance(Base):
     __tablename__ = "attendances"
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="uq_attendance_user_date"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_name = Column(String, nullable=False)
     date = Column(String, nullable=False)
     clock_in = Column(String, nullable=False)
     clock_out = Column(String, nullable=True)
-    status = Column(String, default="Present")
+    status = Column(String, nullable=False, default="Pending")
 
     user = relationship("User", back_populates="attendances")
 
 
 class LeaveRequest(Base):
-    __tablename__ = "leave_requests"
+    __tablename__ = "leaves"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
+    user_name = Column(String, nullable=False)
+    start_date = Column(String, nullable=False)
+    end_date = Column(String, nullable=False)
     reason = Column(String, nullable=False)
-    status = Column(String, default="Pending")  # "Pending", "Approved", "Unapproved"
+    status = Column(String, nullable=False, default="Pending")
 
     user = relationship("User", back_populates="leaves")

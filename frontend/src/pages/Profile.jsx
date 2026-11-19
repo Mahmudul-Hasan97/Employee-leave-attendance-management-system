@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from "react";
-import API from "../services/api";
+import { useState } from "react";
+import API, { getApiErrorMessage, getStoredUser } from "../services/api";
 
 export default function Profile() {
-  const [user, setUser] = useState({ name: "", email: "", role: "" });
+  const [user, setUser] = useState(getStoredUser);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-    setUser(storedUser);
-  }, []);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setMessage("");
+    if (!user.id) {
+      setMessage("Your session is missing user information. Please sign in again.");
+      return;
+    }
+
     try {
-      // API call to update profile
-      await API.put(`/employees/${user.id || 1}`, user);
-      localStorage.setItem("user", JSON.stringify(user));
+      const { data } = await API.put(`/employees/${user.id}`, { name: user.name });
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
       setMessage("Profile updated successfully!");
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to update profile.");
+    } catch (error) {
+      setMessage(getApiErrorMessage(error, "Could not update your profile."));
     }
   };
 

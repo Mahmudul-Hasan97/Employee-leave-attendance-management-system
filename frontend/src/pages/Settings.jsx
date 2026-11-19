@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function Settings() {
   return (
     <div style={{ padding: "30px", backgroundColor: "#0f172a", minHeight: "100vh", color: "#fff" }}>

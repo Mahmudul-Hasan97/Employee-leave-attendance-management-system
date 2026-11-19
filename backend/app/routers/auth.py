@@ -1,25 +1,37 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app import schemas, crud
-from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app import crud, schemas
+from app.database import get_db
+from app.utils import create_access_token, verify_password
 
 router = APIRouter(prefix="/api", tags=["Auth"])
 
+
 @router.post("/login")
 def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = crud.get_user_by_email(db, req.email)
-    
-    # Verify hashed password with passlib
-    if not user or not pwd_context.verify(req.password, user.password) or user.role.lower() != req.role.lower():
+    email = (req.email or req.username or "").strip().lower()
+    user = crud.get_user_by_email(db, email) if email else None
+    valid_password = bool(
+        user and user.password and verify_password(req.password, user.password)
+    )
+    if (
+        not valid_password
+        or (req.role is not None and req.role.lower() != user.role.lower())
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials or role mismatch"
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return {
-        "token": "fake-jwt-token-string",
-        "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
+        "access_token": create_access_token(user.email),
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+        },
     }

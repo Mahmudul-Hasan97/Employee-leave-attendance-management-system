@@ -1,36 +1,44 @@
-import React, { useState, useEffect } from "react";
-import API from "../services/api";
+import { useState, useEffect } from "react";
+import API, { getApiErrorMessage, getStoredUser } from "../services/api";
 
 export default function Attendance() {
   const [attendance, setAttendance] = useState([]);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = getStoredUser();
 
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().slice(0, 10);
+  });
   const [clockInTime, setClockInTime] = useState("");
-  const [employeeName, setEmployeeName] = useState(user.name || user.email?.split("@")[0] || "");
 
   useEffect(() => {
-    fetchAttendance();
+    let active = true;
+    API.get("/attendance")
+      .then(({ data }) => {
+        if (active && Array.isArray(data)) setAttendance(data);
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(getApiErrorMessage(requestError, "Could not load attendance records."));
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, []);
-
-  const fetchAttendance = async () => {
-    try {
-      const res = await API.get("/attendance");
-      if (Array.isArray(res.data)) {
-        setAttendance(res.data);
-      }
-    } catch (err) {
-      console.error("Error fetching attendance:", err);
-    }
-  };
 
   const handleApplyAttendance = async (e) => {
     e.preventDefault();
-    if (!clockInTime || !employeeName) return;
+    setError("");
+    setNotice("");
+    setIsSubmitting(true);
 
     const payload = {
       user_id: user.id || 1,
-      user_name: employeeName,
       date: date,
       clock_in: clockInTime,
     };
@@ -38,30 +46,34 @@ export default function Attendance() {
     try {
       const res = await API.post("/attendance", payload);
       if (res.data) {
-        setAttendance([res.data, ...attendance]);
+        setAttendance((records) => [res.data, ...records]);
         setClockInTime("");
-        alert("Attendance Request Submitted! Waiting for Admin Approval.");
+        setNotice("Attendance request submitted for approval.");
       }
-    } catch (err) {
-      console.error("Failed to apply attendance:", err);
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Could not submit attendance."));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleStatusChange = async (id, status) => {
+    setError("");
     try {
-      await API.put(`/attendance/${id}`, { status });
-      setAttendance(attendance.map((att) => (att.id === id ? { ...att, status } : att)));
-    } catch (err) {
-      console.error("Failed to update status:", err);
+      const { data } = await API.put(`/attendance/${id}`, { status });
+      setAttendance((records) => records.map((att) => (att.id === id ? data : att)));
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Could not update attendance status."));
     }
   };
 
   const handleDelete = async (id) => {
+    setError("");
     try {
       await API.delete(`/attendance/${id}`);
-      setAttendance(attendance.filter((att) => att.id !== id));
-    } catch (err) {
-      console.error("Failed to delete attendance:", err);
+      setAttendance((records) => records.filter((att) => att.id !== id));
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Could not delete the attendance record."));
     }
   };
 
@@ -72,18 +84,9 @@ export default function Attendance() {
       {/* Attendance Form */}
       <div style={{ backgroundColor: "#1e293b", padding: "20px", borderRadius: "8px", marginBottom: "30px" }}>
         <h3 style={{ marginBottom: "15px", color: "#38bdf8" }}>Apply Attendance Request</h3>
-        <form onSubmit={handleApplyAttendance} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "10px", alignItems: "end" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px" }}>Employee Name</label>
-            <input
-              type="text"
-              value={employeeName}
-              onChange={(e) => setEmployeeName(e.target.value)}
-              required
-              placeholder="Enter Employee Name"
-              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #334155", backgroundColor: "#0f172a", color: "#fff" }}
-            />
-          </div>
+        {error && <p role="alert" style={{ color: "#f87171" }}>{error}</p>}
+        {notice && <p role="status" style={{ color: "#4ade80" }}>{notice}</p>}
+        <form className="responsive-form attendance-form" onSubmit={handleApplyAttendance}>
           <div>
             <label style={{ display: "block", fontSize: "12px", marginBottom: "5px" }}>Date</label>
             <input
@@ -104,13 +107,14 @@ export default function Attendance() {
               style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #334155", backgroundColor: "#0f172a", color: "#fff" }}
             />
           </div>
-          <button type="submit" style={{ padding: "9px 20px", backgroundColor: "#16a34a", color: "#fff", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}>
-            Submit Request
+          <button type="submit" disabled={isSubmitting} style={{ padding: "9px 20px", backgroundColor: "#16a34a", color: "#fff", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: isSubmitting ? "wait" : "pointer" }}>
+            {isSubmitting ? "Submitting..." : "Submit Request"}
           </button>
         </form>
       </div>
 
       {/* Attendance Table */}
+      <div className="table-scroll">
       <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#1e293b", borderRadius: "8px", overflow: "hidden" }}>
         <thead>
           <tr style={{ backgroundColor: "#0284c7", color: "#ffffff", textAlign: "left" }}>
@@ -153,6 +157,7 @@ export default function Attendance() {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

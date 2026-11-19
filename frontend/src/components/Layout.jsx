@@ -1,14 +1,15 @@
-import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { getStoredUser } from "../services/api";
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getStoredUser();
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login", { replace: true });
   };
 
   const navItems = [
@@ -22,52 +23,37 @@ export default function Layout({ children }) {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#0f172a", color: "#ffffff" }}>
-      {/* Sidebar */}
-      <aside style={{ width: "240px", backgroundColor: "#1e293b", padding: "20px", display: "flex", flexDirection: "column", gap: "10px", borderRight: "1px solid #334155" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#38bdf8", marginBottom: "20px" }}>EMS System</h2>
-        
-        {navItems.map((item) => {
-          if (item.adminOnly && user.role !== "admin") return null;
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              style={{
-                color: isActive ? "#38bdf8" : "#cbd5e1",
-                backgroundColor: isActive ? "#334155" : "transparent",
-                padding: "10px 15px",
-                borderRadius: "6px",
-                textDecoration: "none",
-                fontWeight: isActive ? "bold" : "normal",
-              }}
-            >
-              {item.name}
-            </Link>
-          );
-        })}
-
-        <button
-          onClick={handleLogout}
-          style={{
-            marginTop: "auto",
-            padding: "10px",
-            backgroundColor: "#ef4444",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "6px",
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
-        >
-          Logout
-        </button>
+    <div className="app-shell">
+      <aside className="app-sidebar">
+        <h2 className="app-brand">EMS System</h2>
+        <nav className="app-nav" aria-label="Main navigation">
+          {navItems.map((item) => {
+            if (item.adminOnly && user.role?.toLowerCase() !== "admin") return null;
+            const isActive = location.pathname === item.path
+              || (item.path === "/leave" && location.pathname === "/leaves");
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                aria-current={isActive ? "page" : undefined}
+                style={{
+                  color: isActive ? "#38bdf8" : "#cbd5e1",
+                  backgroundColor: isActive ? "#334155" : "transparent",
+                  padding: "10px 15px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  fontWeight: isActive ? "bold" : "normal",
+                }}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
       </aside>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <header style={{ height: "60px", backgroundColor: "#1e293b", borderBottom: "1px solid #334155", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 30px" }}>
+      <div className="app-main">
+        <header className="app-header">
           <span style={{ color: "#94a3b8" }}>
             Welcome, <b style={{ color: "#fff" }}>{user.name || user.email || "User"}</b> ({user.role || "employee"})
           </span>
@@ -78,7 +64,7 @@ export default function Layout({ children }) {
             Logout
           </button>
         </header>
-        <main style={{ flex: 1, padding: "30px", overflowY: "auto" }}>
+        <main className="app-content">
           {children}
         </main>
       </div>

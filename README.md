@@ -39,6 +39,43 @@ Employee Leave & Attendance Management System is a modern web-based application 
 
 ---
 
+## Run the application locally
+
+### 1. Start the backend
+
+In PowerShell, run these commands from the repository root:
+
+```powershell
+cd backend
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+python seed.py
+python -m uvicorn app.main:app --reload
+```
+
+The API is available at `http://127.0.0.1:8000`; interactive API documentation is at `http://127.0.0.1:8000/docs`. The SQLite database is stored in `backend/employee_system_v2.db`.
+
+The local demo accounts are `admin@gmail.com` / `admin123` and `employee@gmail.com` / `employee123`. Change these credentials and set a strong `SECRET_KEY` before deploying. Production mode refuses to start with the development-only signing key.
+
+Run backend tests from `backend` with:
+
+```powershell
+python -m pytest
+```
+
+### 2. Start the frontend
+
+Install Node.js `20.19+` or `22.13+`, then run these commands in a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
 ## Folder Structure
 
 ```text

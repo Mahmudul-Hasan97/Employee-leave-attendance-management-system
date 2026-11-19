@@ -1,234 +1,361 @@
-import io
 import csv
-from fastapi import APIRouter, Depends, HTTPException
+import io
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String
-from pydantic import BaseModel
-from app.database import get_db, Base, engine
+
+from app import crud, models, schemas
+from app.database import get_db
+from app.dependencies import get_current_user, require_admin
+from app.utils import create_access_token, verify_password
 
 router = APIRouter()
 
-# --- Database Models ---
-class DBUser(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    role = Column(String, default="employee")
 
-class DBAttendance(Base):
-    __tablename__ = "attendances"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer)
-    user_name = Column(String)
-    date = Column(String)
-    clock_in = Column(String)
-    clock_out = Column(String, default="-")
-    status = Column(String, default="Pending")
+def _is_admin(user: models.User) -> bool:
+    return user.role.lower() == "admin"
 
-class DBLeave(Base):
-    __tablename__ = "leaves"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer)
-    user_name = Column(String)
-    start_date = Column(String)
-    end_date = Column(String)
-    reason = Column(String)
-    status = Column(String, default="Pending")
 
-# Create Database Tables Automatically
-Base.metadata.create_all(bind=engine)
+def _require_owner_or_admin(user_id: int, current_user: models.User) -> None:
+    if user_id != current_user.id and not _is_admin(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You may only access your own records",
+        )
 
-# --- Pydantic Schemas ---
-class EmployeeCreate(BaseModel):
-    name: str
-    email: str
-    role: str = "employee"
 
-class LeaveCreate(BaseModel):
-    user_id: int
-    user_name: str
-    start_date: str
-    end_date: str
-    reason: str
+def _employee_or_404(db: Session, user_id: int) -> models.User:
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return user
 
-class StatusUpdate(BaseModel):
-    status: str
 
-class AttendanceCreate(BaseModel):
-    user_id: int
-    user_name: str
-    date: str
-    clock_in: str
+@router.get("/")
+def root():
+    return {"status": "ok", "message": "Employee Management System API is running"}
 
-# --- Auth Endpoint ---
+
 @router.post("/auth/login")
 @router.post("/login")
-def login(credentials: dict, db: Session = Depends(get_db)):
-    email = credentials.get("email", "")
-    user = db.query(DBUser).filter(DBUser.email == email).first()
-    
-    if not user:
-        is_admin = "admin" in email.lower()
-        user_name = "System Admin" if is_admin else email.split("@")[0].capitalize()
-        role = "admin" if is_admin else "employee"
-        user = DBUser(name=user_name, email=email, role=role)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+def login(
+    credentials: schemas.LoginRequest,
+    db: Session = Depends(get_db),
+):
+    email = (credentials.email or credentials.username or "").strip().lower()
+    user = crud.get_user_by_email(db, email) if email else None
+    valid_password = bool(
+        user
+        and user.password
+        and verify_password(credentials.password, user.password)
+    )
+    if (
+        not valid_password
+        or (
+            credentials.role is not None
+            and credentials.role.lower() != user.role.lower()
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return {
-        "access_token": "token-xyz-123",
+        "access_token": create_access_token(user.email),
         "token_type": "bearer",
         "user": {
             "id": user.id,
             "name": user.name,
             "email": user.email,
-            "role": user.role
-        }
+            "role": user.role,
+        },
     }
 
-# --- Dashboard Stats Endpoint ---
+
 @router.get("/dashboard/stats")
 @router.get("/stats")
-def get_dashboard_stats(db: Session = Depends(get_db)):
-    total_employees = db.query(DBUser).filter(DBUser.role == "employee").count()
-    if total_employees == 0:
-        total_employees = db.query(DBUser).count()
-        
-    total_attendance = db.query(DBAttendance).count()
-    total_leaves = db.query(DBLeave).count()
-    pending_leaves = db.query(DBLeave).filter(DBLeave.status == "Pending").count()
-    pending_attendances = db.query(DBAttendance).filter(DBAttendance.status == "Pending").count()
+def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    total_employees = db.query(models.User).filter(models.User.role == "employee").count()
+
+    attendance_query = db.query(models.Attendance)
+    leave_query = db.query(models.LeaveRequest)
+    if not _is_admin(current_user):
+        attendance_query = attendance_query.filter(
+            models.Attendance.user_id == current_user.id
+        )
+        leave_query = leave_query.filter(models.LeaveRequest.user_id == current_user.id)
 
     return {
         "total_employees": total_employees,
-        "total_attendance": total_attendance,
-        "total_leaves": total_leaves,
-        "pending_leaves": pending_leaves,
-        "pending_attendances": pending_attendances
+        "total_attendance": attendance_query.count(),
+        "total_leaves": leave_query.count(),
+        "pending_leaves": leave_query.filter(
+            models.LeaveRequest.status == "Pending"
+        ).count(),
+        "pending_attendances": attendance_query.filter(
+            models.Attendance.status == "Pending"
+        ).count(),
     }
 
-# --- Report Download Endpoint (NEW FIX) ---
+
+def _safe_csv_value(value: str | None) -> str:
+    text = value or ""
+    if text.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + text
+    return text
+
+
 @router.get("/reports/download")
-def download_report(db: Session = Depends(get_db)):
-    output = io.StringIO()
-    writer = csv.writer(output)
-    
-    # Write Header
-    writer.writerow(["Record Type", "Employee Name", "Date / Start Date", "Clock In / End Date", "Reason / Detail", "Status"])
-    
-    # Write Attendance Data
-    attendances = db.query(DBAttendance).all()
-    for att in attendances:
-        writer.writerow(["Attendance", att.user_name or "N/A", att.date, att.clock_in, "-", att.status])
-        
-    # Write Leave Data
-    leaves = db.query(DBLeave).all()
-    for l in leaves:
-        writer.writerow(["Leave Request", l.user_name or "N/A", l.start_date, l.end_date, l.reason, l.status])
-        
-    output.seek(0)
-    
-    response = StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv"
+def download_report(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    attendances = (
+        crud.get_all_attendance(db)
+        if _is_admin(current_user)
+        else crud.get_user_attendance(db, current_user.id)
     )
-    response.headers["Content-Disposition"] = "attachment; filename=System_Report.csv"
-    return response
+    leaves = (
+        crud.get_all_leaves(db)
+        if _is_admin(current_user)
+        else crud.get_user_leaves(db, current_user.id)
+    )
 
-# --- Employee Endpoints ---
-@router.get("/employees")
-def get_employees(db: Session = Depends(get_db)):
-    return db.query(DBUser).all()
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "Record Type",
+            "Employee Name",
+            "Date / Start Date",
+            "Clock In / End Date",
+            "Reason / Detail",
+            "Status",
+        ]
+    )
+    for attendance in attendances:
+        writer.writerow(
+            [
+                "Attendance",
+                _safe_csv_value(attendance.user_name),
+                attendance.date,
+                attendance.clock_in,
+                _safe_csv_value(attendance.clock_out),
+                attendance.status,
+            ]
+        )
+    for leave in leaves:
+        writer.writerow(
+            [
+                "Leave Request",
+                _safe_csv_value(leave.user_name),
+                leave.start_date,
+                leave.end_date,
+                _safe_csv_value(leave.reason),
+                leave.status,
+            ]
+        )
 
-@router.post("/employees")
-def create_employee(emp: EmployeeCreate, db: Session = Depends(get_db)):
-    new_user = DBUser(name=emp.name, email=emp.email, role=emp.role)
-    db.add(new_user)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=System_Report.csv"},
+    )
+
+
+@router.get("/employees", response_model=list[schemas.UserResponse])
+def get_employees(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    return crud.get_all_users(db)
+
+
+@router.post(
+    "/employees",
+    response_model=schemas.UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_employee(
+    employee: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    if crud.get_user_by_email(db, employee.email):
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+    try:
+        return crud.create_user(db, employee)
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="An account with this email already exists") from exc
+
+
+@router.put("/employees/{employee_id}", response_model=schemas.UserResponse)
+def update_employee(
+    employee_id: int,
+    profile: schemas.ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _require_owner_or_admin(employee_id, current_user)
+    employee = _employee_or_404(db, employee_id)
+    employee.name = profile.name
     db.commit()
-    db.refresh(new_user)
-    return new_user
+    db.refresh(employee)
+    return employee
 
-@router.delete("/employees/{emp_id}")
-def delete_employee(emp_id: int, db: Session = Depends(get_db)):
-    emp = db.query(DBUser).filter(DBUser.id == emp_id).first()
-    if emp:
-        db.delete(emp)
-        db.commit()
+
+@router.delete("/employees/{employee_id}")
+def delete_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
+    employee = _employee_or_404(db, employee_id)
+    if employee.id == current_user.id:
+        raise HTTPException(status_code=409, detail="You cannot delete your own account")
+    db.delete(employee)
+    db.commit()
     return {"message": "Employee deleted"}
 
-# --- Leave Endpoints ---
-@router.get("/leaves")
-def get_leaves(db: Session = Depends(get_db)):
-    return db.query(DBLeave).all()
 
-@router.post("/leaves")
-def create_leave(leave: LeaveCreate, db: Session = Depends(get_db)):
-    new_leave = DBLeave(
-        user_id=leave.user_id,
-        user_name=leave.user_name,
-        start_date=leave.start_date,
-        end_date=leave.end_date,
-        reason=leave.reason,
-        status="Pending"
+@router.get("/attendance", response_model=list[schemas.AttendanceResponse])
+def get_attendance(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if _is_admin(current_user):
+        return crud.get_all_attendance(db)
+    return crud.get_user_attendance(db, current_user.id)
+
+
+@router.post(
+    "/attendance",
+    response_model=schemas.AttendanceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_attendance(
+    attendance: schemas.AttendanceCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    user_id = attendance.user_id if _is_admin(current_user) else current_user.id
+    employee = _employee_or_404(db, user_id)
+    duplicate = (
+        db.query(models.Attendance)
+        .filter(
+            models.Attendance.user_id == user_id,
+            models.Attendance.date == attendance.date.isoformat(),
+        )
+        .first()
     )
-    db.add(new_leave)
-    db.commit()
-    db.refresh(new_leave)
-    return new_leave
+    if duplicate:
+        raise HTTPException(
+            status_code=409,
+            detail="Attendance has already been submitted for this date",
+        )
 
-@router.put("/leaves/{leave_id}")
-def update_leave_status(leave_id: int, update: StatusUpdate, db: Session = Depends(get_db)):
-    leave = db.query(DBLeave).filter(DBLeave.id == leave_id).first()
-    if leave:
-        leave.status = update.status
-        db.commit()
-        db.refresh(leave)
+    attendance.user_id = user_id
+    try:
+        return crud.create_attendance(db, attendance, employee.name)
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Attendance has already been submitted for this date",
+        ) from exc
+
+
+@router.put("/attendance/{attendance_id}", response_model=schemas.AttendanceResponse)
+def update_attendance_status(
+    attendance_id: int,
+    update: schemas.AttendanceUpdate,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    attendance = crud.update_attendance(db, attendance_id, update.status)
+    if attendance is None:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    return attendance
+
+
+@router.delete("/attendance/{attendance_id}")
+def delete_attendance(
+    attendance_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    attendance = (
+        db.query(models.Attendance)
+        .filter(models.Attendance.id == attendance_id)
+        .first()
+    )
+    if attendance is None:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    _require_owner_or_admin(attendance.user_id, current_user)
+    crud.delete_attendance(db, attendance_id)
+    return {"message": "Attendance log deleted"}
+
+
+@router.get("/leaves", response_model=list[schemas.LeaveRequestResponse])
+def get_leaves(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    if _is_admin(current_user):
+        return crud.get_all_leaves(db)
+    return crud.get_user_leaves(db, current_user.id)
+
+
+@router.post(
+    "/leaves",
+    response_model=schemas.LeaveRequestResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_leave(
+    leave: schemas.LeaveRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    user_id = leave.user_id if _is_admin(current_user) else current_user.id
+    employee = _employee_or_404(db, user_id)
+    leave.user_id = user_id
+    return crud.create_leave_request(db, leave, employee.name)
+
+
+@router.put("/leaves/{leave_id}", response_model=schemas.LeaveRequestResponse)
+def update_leave_status(
+    leave_id: int,
+    update: schemas.LeaveStatusUpdate,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+    leave = crud.update_leave_status(db, leave_id, update.status)
+    if leave is None:
+        raise HTTPException(status_code=404, detail="Leave request not found")
     return leave
 
+
 @router.delete("/leaves/{leave_id}")
-def delete_leave(leave_id: int, db: Session = Depends(get_db)):
-    leave = db.query(DBLeave).filter(DBLeave.id == leave_id).first()
-    if leave:
-        db.delete(leave)
-        db.commit()
-    return {"message": "Leave deleted"}
-
-# --- Attendance Endpoints ---
-@router.get("/attendance")
-def get_attendance(db: Session = Depends(get_db)):
-    return db.query(DBAttendance).all()
-
-@router.post("/attendance")
-def create_attendance(att: AttendanceCreate, db: Session = Depends(get_db)):
-    new_att = DBAttendance(
-        user_id=att.user_id,
-        user_name=att.user_name,
-        date=att.date,
-        clock_in=att.clock_in,
-        clock_out="-",
-        status="Pending"
+def delete_leave(
+    leave_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    leave = (
+        db.query(models.LeaveRequest)
+        .filter(models.LeaveRequest.id == leave_id)
+        .first()
     )
-    db.add(new_att)
-    db.commit()
-    db.refresh(new_att)
-    return new_att
-
-@router.put("/attendance/{att_id}")
-def update_attendance_status(att_id: int, update: StatusUpdate, db: Session = Depends(get_db)):
-    att = db.query(DBAttendance).filter(DBAttendance.id == att_id).first()
-    if att:
-        att.status = update.status
-        db.commit()
-        db.refresh(att)
-    return att
-
-@router.delete("/attendance/{att_id}")
-def delete_attendance(att_id: int, db: Session = Depends(get_db)):
-    att = db.query(DBAttendance).filter(DBAttendance.id == att_id).first()
-    if att:
-        db.delete(att)
-        db.commit()
-    return {"message": "Attendance log deleted"}
+    if leave is None:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+    _require_owner_or_admin(leave.user_id, current_user)
+    crud.delete_leave_request(db, leave_id)
+    return {"message": "Leave request deleted successfully"}

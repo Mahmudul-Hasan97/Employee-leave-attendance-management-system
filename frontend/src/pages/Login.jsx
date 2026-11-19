@@ -1,30 +1,33 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../services/api";
+import { getApiErrorMessage, loginUser } from "../services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     try {
-      const response = await API.post("/auth/login", { email, password });
-      if (response && response.data) {
-        const token = response.data.access_token || "token-123";
-        const user = response.data.user;
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        navigate("/dashboard");
+      const response = await loginUser({ email, password });
+      if (!response.access_token || !response.user?.id) {
+        throw new Error("The server returned an invalid login response.");
       }
+      localStorage.setItem("token", response.access_token);
+      localStorage.setItem("user", JSON.stringify(response.user));
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      console.error("Login Failed:", err);
-      setError("Invalid credentials! Please try again.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setError(getApiErrorMessage(err, "Login failed. Check your email and password."));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,9 +64,10 @@ export default function Login() {
 
         <button
           type="submit"
-          style={{ width: "100%", padding: "10px", backgroundColor: "#0284c7", color: "#fff", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+          disabled={isSubmitting}
+          style={{ width: "100%", padding: "10px", backgroundColor: "#0284c7", color: "#fff", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: isSubmitting ? "wait" : "pointer" }}
         >
-          Sign In
+          {isSubmitting ? "Signing in..." : "Sign In"}
         </button>
       </form>
     </div>
